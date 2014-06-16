@@ -1,0 +1,10 @@
+path(path,[pwd '/']);
+addpath([[pwd '/'] 'data']);
+addpath([[pwd '/'] 'data\01_19']);
+addpath([[pwd '/'] 'data\03_19']);
+addpath([[pwd '/'] 'data\foc']);
+addpath([[pwd '/'] 'filters']);
+addpath([[pwd '/'] 'fourier']);
+addpath([[pwd '/'] 'spectro']);
+addpath([[pwd '/'] 'globalfn']);
+addpath([[pwd '/'] 'conversion']);
