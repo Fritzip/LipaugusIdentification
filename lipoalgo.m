@@ -1,6 +1,7 @@
+%%%%%%%%%%%%%%%%%%%%%%%
 %% Initalization
+%%%%%%%%%%%%%%%%%%%%%%%
 tic, clear, clc, close all
-cd('C:\Users\Bernadette\Desktop\Maxime\Lipaugus\Lipoalgo')
 lipoalgopaths;
 
 global fs nfft ovlp T F
@@ -32,7 +33,9 @@ HIGHR = 5600;
 LOWR = 1300;
 
 toc
+%%%%%%%%%%%%%%%%%%%%%%%
 %% Pre-treatment
+%%%%%%%%%%%%%%%%%%%%%%%
 tic
 % Bandpass filter
 xbp = bandpass(x,LOW,HIGH);
@@ -68,7 +71,10 @@ Safn = nlfilter(Saf,[20 2],f); %%%%%%%%%%% /!\ ARBITRARY CONST %%%%%%%%%%%
 % plotmat(T,F,log(Safn));
 
 toc
+%%%%%%%%%%%%%%%%%%%%%%%
 %% Segmentation
+%%%%%%%%%%%%%%%%%%%%%%%
+
 tic
 % Sum of all intensity
 shftw = time2co(1.2); % Pie + Hau average lengths %%%%%% /!\ CONST %%%%%%
@@ -97,13 +103,17 @@ for i = 1:size(maxtab,1)
     end
     rectangle('Position',[co2time(maxtab(i,1))-0.2,1100+dec,1.6,4500],...
             'Curvature',[0.4,0.8],...
-            'LineWidth',2,'LineStyle','--','EdgeColor',color)
+            'LineWidth',2,...
+            'LineStyle','--',...
+            'EdgeColor',color)
     hold on
 end
 hold off
 toc
+%%%%%%%%%%%%%%%%%%%%%%%
 %% Treatment 
-%tic
+%%%%%%%%%%%%%%%%%%%%%%%
+
 BW = 0;
 for i = 2:length(maxtab(:,1))
     val = maxtab(i,1);
@@ -123,8 +133,10 @@ for i = 2:length(maxtab(:,1))
     
     waitforbuttonpress
 end
-%toc
+
+%%%%%%%%%%%%%%%%%%%%%%%
 %% Measurments
+%%%%%%%%%%%%%%%%%%%%%%%
 tic
 for k = length(maxtab(:,1))
     Srec = Safn(freq2co(LOWR):freq2co(HIGHR),maxtab(k,1)-time2co(0.1):maxtab(k,1)+shftw);

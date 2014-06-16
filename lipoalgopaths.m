@@ -8,3 +8,4 @@ addpath([[pwd '/'] 'fourier']);
 addpath([[pwd '/'] 'spectro']);
 addpath([[pwd '/'] 'globalfn']);
 addpath([[pwd '/'] 'conversion']);
+addpath([[pwd '/'] 'peaks']);
