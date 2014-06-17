@@ -118,14 +118,13 @@ i = 9;
 %for i = 2:length(maxtab(:,1))
     val = maxtab(i,1);
     [tinf, tsup] = findtco(val, shftw); %%%%%%%%%%% /!\ ARBITRARY CONST IN FUNCTION %%%%%%%%%%%
-    Sreca = Sa(freq2co(LOWR):freq2co(HIGH), tinf:tsup);
-    Srecaf = Saf(freq2co(LOWR):freq2co(HIGH),tinf:tsup);
+    trange = tinf:tsup;
+    frange = freq2co(LOWR):freq2co(HIGHR);
+    
+    Sreca = Sa(frange, trange);
+    Srecaf = Saf(frange,trange);
 
     m = findedges(Sreca, Srecaf); %%%%%%%%%%% /!\ ARBITRARY CONST IN FUNCTION %%%%%%%%%%%
-    
-    figure(2)
-    subplot(131), plotmat(T(tinf:tsup),F(freq2co(1400):freq2co(HIGH)),log(Sreca)); 
-    subplot(132), plotmat(T(tinf:tsup),F(freq2co(1400):freq2co(HIGH)),m);
     
     % Transform m to 3 vectors x,y (positions) and w the weighted vector
     n = size(m,1);
@@ -140,8 +139,11 @@ i = 9;
 
     y = y'; y = y(:);
     w = w'; w = w(:);
-    x = repmat(T(tinf:tsup)',1,n)'; x = x(:)';
+    x = repmat(T(trange)',1,n)'; x = x(:)';
 
+    figure(2)
+    subplot(131), plotmat(T(trange),F(frange),log(Sreca)); 
+    subplot(132), plotmat(T(trange),F(frange),m);
     subplot(133), plot(x, y, '*b')
     
 %     waitforbuttonpress
