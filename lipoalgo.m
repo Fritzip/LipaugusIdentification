@@ -114,25 +114,39 @@ toc
 %% Treatment 
 %%%%%%%%%%%%%%%%%%%%%%%
 
-BW = 0;
-for i = 2:length(maxtab(:,1))
+i = 9;
+%for i = 2:length(maxtab(:,1))
     val = maxtab(i,1);
     [tinf, tsup] = findtco(val, shftw); %%%%%%%%%%% /!\ ARBITRARY CONST IN FUNCTION %%%%%%%%%%%
     Sreca = Sa(freq2co(LOWR):freq2co(HIGH), tinf:tsup);
     Srecaf = Saf(freq2co(LOWR):freq2co(HIGH),tinf:tsup);
 
-    BW = findedges(Sreca, Srecaf); %%%%%%%%%%% /!\ ARBITRARY CONST IN FUNCTION %%%%%%%%%%%
+    m = findedges(Sreca, Srecaf); %%%%%%%%%%% /!\ ARBITRARY CONST IN FUNCTION %%%%%%%%%%%
     
-    % f = @(x) mean(x(:));
-    % BW = nlfilter(BW,[10 10],f);
-    % BW(BW<0.2*max(BW(:))) = 0;
-
     figure(2)
-    subplot(121), plotmat(T(tinf:tsup),F(freq2co(1400):freq2co(HIGH)),log(Sreca)); 
-    subplot(122), plotmat(T(tinf:tsup),F(freq2co(1400):freq2co(HIGH)),BW);
+    subplot(131), plotmat(T(tinf:tsup),F(freq2co(1400):freq2co(HIGH)),log(Sreca)); 
+    subplot(132), plotmat(T(tinf:tsup),F(freq2co(1400):freq2co(HIGH)),m);
     
-    waitforbuttonpress
-end
+    % Transform m to 3 vectors x,y (positions) and w the weighted vector
+    n = size(m,1);
+    y = zeros(size(m,2),n);
+    w = zeros(size(m,2),n);
+
+    for j = 1:size(m,2)
+        [sortedValues, sortedIndex] = sort(m(:,j),'descend');
+        y(j,:) = sortedIndex(1:n);
+        w(j,:) = sortedValues(1:n);
+    end
+
+    y = y'; y = y(:);
+    w = w'; w = w(:);
+    x = repmat(T(tinf:tsup)',1,n)'; x = x(:)';
+
+    subplot(133), plot(x, y, '*b')
+    
+%     waitforbuttonpress
+% end
+
 
 %%%%%%%%%%%%%%%%%%%%%%%
 %% Measurments
