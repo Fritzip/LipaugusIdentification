@@ -1,4 +1,11 @@
 function BW = findedges(Sreca, Srecaf)
+% Compute edge detection with all methods available on log and not matrix
+% and on fuzzy and not matrix. Then remove points of low probability
+% according to the usual shape of the envelope and computes the mean of all
+% matrix found.
+%  usage : BW = findedges(mat, fuzzy_mat)
+%  BW is the output matrix of the same size of the input matrix
+% -------------------------------------------------------------------------
     % Sobel
     [BWv] = edge(Sreca,'sobel',0.5,'vertical');
     [BWh] = edge(Sreca,'sobel',0.5,'horizontal');

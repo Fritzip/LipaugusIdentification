@@ -1,4 +1,7 @@
 function plotmat(varargin)
+% Plot matrix with label
+% usage : plotmat([T, F], S)
+%--------------------------------------------------------------------------
     if isequal(size(varargin,2),1)
         imagesc(varargin{1});
     elseif isequal(size(varargin,2),3)
@@ -7,5 +10,4 @@ function plotmat(varargin)
         ylabel('Frequency (Hz)')
     end
     set(gca,'YDir','normal');
-    %title('Spectro')
 end

@@ -114,16 +114,19 @@ toc
 %% Treatment 
 %%%%%%%%%%%%%%%%%%%%%%%
 
-i = 9;
+i = 31;
 %for i = 2:length(maxtab(:,1))
+    % Get position (time) of calls
     val = maxtab(i,1);
     [tinf, tsup] = findtco(val, shftw); %%%%%%%%%%% /!\ ARBITRARY CONST IN FUNCTION %%%%%%%%%%%
     trange = tinf:tsup;
     frange = freq2co(LOWR):freq2co(HIGHR);
     
+    % Reduce mat to the studied call
     Sreca = Sa(frange, trange);
-    Srecaf = Saf(frange,trange);
+    Srecaf = Saf(frange, trange);
 
+    % Find the edges (denoise)
     m = findedges(Sreca, Srecaf); %%%%%%%%%%% /!\ ARBITRARY CONST IN FUNCTION %%%%%%%%%%%
     
     % Transform m to 3 vectors x,y (positions) and w the weighted vector
@@ -141,10 +144,11 @@ i = 9;
     w = w'; w = w(:);
     x = repmat(T(trange)',1,n)'; x = x(:)';
 
+    % Plot
     figure(2)
-    subplot(131), plotmat(T(trange),F(frange),log(Sreca)); 
-    subplot(132), plotmat(T(trange),F(frange),m);
-    subplot(133), plot(x, y, '*b')
+    subplot(131), plotmat(T(trange),F(frange),log(Sreca)); title('Raw')
+    subplot(132), plotmat(T(trange),F(frange),m); title('The matrix to treat')
+    subplot(133), plotmat(T(trange),F(frange),m); title('What is expected') % plot(x, y, '*b')
     
 %     waitforbuttonpress
 % end
