@@ -7,7 +7,7 @@ lipoalgopaths;
 global fs nfft ovlp T F
 
 % Read .wav file
-[x, fs] = audioread('120119_071_mono3.WAV',[round(2700*44100) round(2900*44100)]);
+[x, fs] = audioread('120119_071_mono3.WAV',[round(2400*44100) round(2600*44100)]);
 
 % Stereo to mono
 x = stereo2mono(x);
@@ -114,7 +114,6 @@ toc
 %% Treatment 
 %%%%%%%%%%%%%%%%%%%%%%%
 
-
 for i = 2:length(maxtab(:,1))
     % Get position (time) of calls
     val = maxtab(i,1);
@@ -129,30 +128,50 @@ for i = 2:length(maxtab(:,1))
     % Find the edges (denoise)
     m = findedges(Sreca, Srecaf); %%%%%%%%%%% /!\ ARBITRARY CONST IN FUNCTION %%%%%%%%%%%
     
-    
-    
     % Transform m to 3 vectors x,y (positions) and w the weighted vector
-    n = size(m,1);
-    y = zeros(size(m,2),n);
-    w = zeros(size(m,2),n);
+    %[x, y, w] = mat3vec(m);
 
-    for j = 1:size(m,2)
-        [sortedValues, sortedIndex] = sort(m(:,j),'descend');
-        y(j,:) = sortedIndex(1:n);
-        w(j,:) = sortedValues(1:n);
-    end
-
-    y = y'; y = y(:);
-    w = w'; w = w(:);
-    x = repmat(T(trange)',1,n)'; x = x(:)';
-
+    figure(1)
+    xlim([co2time(tinf)-3 co2time(tsup)+3])
+    
     % Plot
     figure(2)
     subplot(121), plotmat(T(trange),F(frange),log(Sreca)); title('Raw')
-    subplot(122), plotmat(T(trange),F(frange),m); title('The matrix to treat')
+    subplot(122), plotmat(m); title('The matrix to treat'), hold on % T(trange),F(frange),
     %subplot(133), plotmat(T(trange),F(frange),m); title('What is expected') % plot(x, y, '*b')
     
-    waitforbuttonpress
+    [val, ind] = max(m(:));
+    [I, J] = ind2sub(size(m),ind);
+    %I = co2freq(I+freq2co(LOWR));
+    %J = co2time(J)+co2time(tinf);
+    plot(J,I,'*g')
+    hold on
+    
+    [x, y, w, h] = checkco(J-6,I-10,12,20,m);
+    rectangle('Position',[x, y, w, h],...
+            'LineWidth',2,...
+            'LineStyle','--',...
+            'EdgeColor','r')
+%     srec = m(y:y+h,x:x+w);
+%     
+%     
+%     [x, y, w] = mat3vec(srec);
+%     mr(mr<0.9*max(mr(:))) = 0;
+%     figure(3), plotmat(srec), hold on,
+%     [fitresult, gof] = createFitSmooth(x,y,w);
+%     plot(fitresult)
+
+    mr = m(:,:).^3;
+    %mr(mr<0.4*max(mr(:))) = 0;
+    [x, y, w] = mat3vec(mr);
+    figure(3), plotmat(mr), hold on,
+    [fitresult, gof] = createFitSmooth(x,y,w);
+    plot(fitresult), hold off
+    
+    a = 1;
+    while a
+        a = ~waitforbuttonpress;
+    end
 end
 
 
@@ -193,10 +212,6 @@ hold on
 plot(locs,pks, '*r')
 
 
-%%
-
-BW = edge(C,'zerocross');
-plotmat(T,F,BW);
 
 %%
 [pks, locs, over] = getpeakseparated(Sa(freq2co(4000),:),15,0,0.5);
@@ -220,7 +235,13 @@ end
 %plot(T, Imax*fs/nfft, '*b')
 
 %%
-
+    mr = m(:,1:35);
+    mr(mr<0.5*max(mr(:))) = 0;
+    [x, y, w] = mat3vec(mr);
+    figure(3), plotmat(mr), hold on,
+    [fitresult, gof] = createFitSmooth(x,y,w);
+    plot(fitresult)
+    
 %%
 [C, I] = max(im);
 I(C<45) = NaN;
