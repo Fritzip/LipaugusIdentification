@@ -1,6 +1,6 @@
-function [x, y, w, h] = checkco(x, y, w, h, m)
-% Given coordinates (defining a rectangle area) and a matrix, CHECKCO will
-% adapt x, y, w, h to define corrects coordinates of m.
+function [x, y] = checkco(x, y, m)
+% Given coordinates and a matrix, CHECKCO will
+% adapt x, y, to define corrects coordinates of m.
 % -------------------------------------------------------------------------
     [mx, my] = size(m);
     if x < 1
@@ -9,10 +9,10 @@ function [x, y, w, h] = checkco(x, y, w, h, m)
     if y < 1
         y = 1;
     end
-    if x + w > my
-        w = my - x;
+    if x > my
+        x = my;
     end
-    if y + h > mx
-        h = mx - y;
+    if y > mx
+        y = mx;
     end
 end

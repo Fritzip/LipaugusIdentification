@@ -126,7 +126,10 @@ for i = 2:length(maxtab(:,1))
     Srecaf = Saf(frange, trange);
 
     % Find the edges (denoise)
-    m = findedges(Sreca, Srecaf); %%%%%%%%%%% /!\ ARBITRARY CONST IN FUNCTION %%%%%%%%%%%
+    BWsa = findedges(Sreca);
+    BWsaf = findedges(Srecaf);
+    BWs = [BWsa, BWsaf];
+    m = rmnoisepts(BWs,35); %%%%%%%%%%% /!\ ARBITRARY CONST %%%%%%%%%%%
     
     % Transform m to 3 vectors x,y (positions) and w the weighted vector
     %[x, y, w] = mat3vec(m);
@@ -140,33 +143,66 @@ for i = 2:length(maxtab(:,1))
     subplot(122), plotmat(m); title('The matrix to treat'), hold on % T(trange),F(frange),
     %subplot(133), plotmat(T(trange),F(frange),m); title('What is expected') % plot(x, y, '*b')
     
-    [val, ind] = max(m(:));
-    [I, J] = ind2sub(size(m),ind);
-    %I = co2freq(I+freq2co(LOWR));
-    %J = co2time(J)+co2time(tinf);
-    plot(J,I,'*g')
-    hold on
     
-    [x, y, w, h] = checkco(J-6,I-10,12,20,m);
-    rectangle('Position',[x, y, w, h],...
-            'LineWidth',2,...
-            'LineStyle','--',...
-            'EdgeColor','r')
+    
+%     [x, y, w, h] = checkcorec(J-6,I-10,12,20,m);
+%     rectangle('Position',[x, y, w, h],...
+%             'LineWidth',2,...
+%             'LineStyle','--',...
+%             'EdgeColor','r')
+        
+    m(m<0.15*max(m(:))) = 0;    
+    
+    mod = zeros(size(m));
+    mask = ones(size(m));
+    
+    while ~isequal(sum(m.*mask),0)
+        [val, ind] = max(m(:));
+        [I, J] = ind2sub(size(m),ind);
+        %I = co2freq(I+freq2co(LOWR));
+        %J = co2time(J)+co2time(tinf);
+        plot(J,I,'*g')
+        hold on
+        
+        x = J;
+        y = I;
+        
+        maxh = 5;
+        for vert = -1:2:1
+            % sens (monte ou descend)
+            DEADEND = 0;
+            while ~DEADEND
+                while 
+                    [xl, yl] = checkco(x-1, y, m);
+                    if ~isequal(m(yl,xl),0) && nbl<5
+                        nbl = nbl + 1;
+                        x = xl;
+                        y = yl;
+                    end
+                    mask(I,J:J+10) = 0;
+                end
+            end
+        end
+        
+    end
+    
+    
+    
 %     srec = m(y:y+h,x:x+w);
-%     
-%     
 %     [x, y, w] = mat3vec(srec);
-%     mr(mr<0.9*max(mr(:))) = 0;
-%     figure(3), plotmat(srec), hold on,
-%     [fitresult, gof] = createFitSmooth(x,y,w);
-%     plot(fitresult)
+%     
+%     figure(3), plotmat(srec)
+    %edg = findedges(srec);
+    %BW = mergeBWs(edg,4);
+    %disp(BW)
+    %figure(4), plotmat(BW)
 
-    mr = m(:,:).^3;
-    %mr(mr<0.4*max(mr(:))) = 0;
-    [x, y, w] = mat3vec(mr);
-    figure(3), plotmat(mr), hold on,
-    [fitresult, gof] = createFitSmooth(x,y,w);
-    plot(fitresult), hold off
+%     mr = m(:,:).^3;
+%     %mr(mr<0.4*max(mr(:))) = 0;
+%     [x, y, w] = mat3vec(mr);
+%     figure(3), plotmat(mr), hold on,
+%     [fitresult, gof] = createFitSmooth(x,y,w);
+%     plot(fitresult), hold off
     
     a = 1;
     while a
