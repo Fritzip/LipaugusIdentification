@@ -156,35 +156,7 @@ for i = 2:length(maxtab(:,1))
     mod = zeros(size(m));
     mask = ones(size(m));
     
-    while ~isequal(sum(m.*mask),0)
-        [val, ind] = max(m(:));
-        [I, J] = ind2sub(size(m),ind);
-        %I = co2freq(I+freq2co(LOWR));
-        %J = co2time(J)+co2time(tinf);
-        plot(J,I,'*g')
-        hold on
-        
-        x = J;
-        y = I;
-        
-        maxh = 5;
-        for vert = -1:2:1
-            % sens (monte ou descend)
-            DEADEND = 0;
-            while ~DEADEND
-                while 
-                    [xl, yl] = checkco(x-1, y, m);
-                    if ~isequal(m(yl,xl),0) && nbl<5
-                        nbl = nbl + 1;
-                        x = xl;
-                        y = yl;
-                    end
-                    mask(I,J:J+10) = 0;
-                end
-            end
-        end
-        
-    end
+    
     
     
     
