@@ -1,5 +1,4 @@
-plotmat(m), hold on
-while ~isequal(sum(m.*mask),0)
+while ~isequal(sum(m(:).*mask(:)),0)
     [val, ind] = max(m(:).*mask(:));
     [I, J] = ind2sub(size(m),ind);
     %I = co2freq(I+freq2co(LOWR));
@@ -10,7 +9,8 @@ while ~isequal(sum(m.*mask),0)
 
     maxh = 5;
     maxv = 5;
-
+    
+    pocs = {};
     poc = []; % piece of curve
     for vdir = -1:2:1 % direction vertical (monte ou descend)
         % Initialisation x, y
@@ -20,16 +20,25 @@ while ~isequal(sum(m.*mask),0)
         % VERTICAL
         ENDV = 0;
         vdec = 0;
+        
         while ~ENDV && vdec <= maxv
-            if isequal(m(y,x),0)
-                hdir = 1; % direction horizontale (gauche ou droite)
-            else
-                hdir = -1;
-            end
-
             % HORIZONTAL
             hdec = 0;
             ENDH = 0;
+            
+            if isequal(m(y,x),0)
+                [xout, yout, bool] = lookleft(x, y, m);
+                if bool
+                    x = xout;
+                    y = yout;
+                    ENDH = 1;
+                else
+                    hdir = 1; % direction horizontale (gauche ou droite)
+                end
+            else
+                hdir = -1;
+            end
+            
             while ~ENDH && hdec <= maxh
                 % tant qu'on n'a pas rencontré une jonction (0, ~0), on se décale (5x max) 
                 hdec = hdec + 1; % on incrémente le décalage
@@ -49,10 +58,12 @@ while ~isequal(sum(m.*mask),0)
                 else
                     y = ynew;
                 end
-            elseif isequal(ENDH,0)
+            else
                 vdec = vdec + 1;
             end
         end
-        % SAUVER POC > n pts
+    end
+    if size(poc, 1) > 5
+        pocs{end+1} = poc;
     end
 end

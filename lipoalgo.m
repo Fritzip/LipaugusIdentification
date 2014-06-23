@@ -139,9 +139,9 @@ for i = 2:length(maxtab(:,1))
     
     % Plot
     figure(2)
-    subplot(121), plotmat(T(trange),F(frange),log(Sreca)); title('Raw')
-    subplot(122), plotmat(m); title('The matrix to treat'), hold on % T(trange),F(frange),
-    %subplot(133), plotmat(T(trange),F(frange),m); title('What is expected') % plot(x, y, '*b')
+    subplot(131), plotmat(T(trange),F(frange),log(Sreca)); title('Raw')
+    subplot(132), plotmat(m); title('The matrix to treat'), hold on % T(trange),F(frange),
+    
     
     
     
@@ -151,12 +151,12 @@ for i = 2:length(maxtab(:,1))
 %             'LineStyle','--',...
 %             'EdgeColor','r')
         
-    m(m<0.15*max(m(:))) = 0;    
+    %m(m<0.15*max(m(:))) = 0;    
     
     mod = zeros(size(m));
     mask = ones(size(m));
     
-    
+    subplot(133), plotmat(m); title('15% less')
     
     
     
@@ -187,6 +187,85 @@ end
 %% Measurments
 %%%%%%%%%%%%%%%%%%%%%%%
 tic
+
+while ~isequal(sum(m(:).*mask(:)),0)
+    [val, ind] = max(m(:).*mask(:));
+    [I, J] = ind2sub(size(m),ind);
+    %I = co2freq(I+freq2co(LOWR));
+    %J = co2time(J)+co2time(tinf);
+
+    plot(J,I,'*g')
+    hold on
+
+    maxh = 5;
+    maxv = 5;
+    
+    pocs = {};
+    poc = []; % piece of curve
+    for vdir = -1:2:1 % direction vertical (monte ou descend)
+        % Initialisation x, y
+        x = J;
+        y = I;
+
+        % VERTICAL
+        ENDV = 0;
+        vdec = 0;
+        
+        while ~ENDV && vdec <= maxv
+            % HORIZONTAL
+            hdec = 0;
+            ENDH = 0;
+            
+            if isequal(m(y,x),0)
+                [xout, yout, bool] = lookleft(x, y, m);
+                if bool
+                    x = xout;
+                    y = yout;
+                    ENDH = 1;
+                else
+                    hdir = 1; % direction horizontale (gauche ou droite)
+                end
+            else
+                hdir = -1;
+            end
+            
+            while ~ENDH && hdec <= maxh
+                % tant qu'on n'a pas rencontré une jonction (0, ~0), on se décale (5x max) 
+                hdec = hdec + 1; % on incrémente le décalage
+                [x, y, ENDH] = checkandgo(x, y, m, hdir); % on tente le décalalage
+                % ENDH = 1 : on a trouver une jonction
+                % ENDH = 0 : on continue à se décaller OU on est au bord de l'image
+            end
+
+            if isequal(ENDH,1)
+                % on poursuit
+                poc = [poc; x y]; % append (x, y) to the list 
+                mask(y, x:x + 5) = 0; % update mask
+                
+                subplot(133), plotmat(m.*mask), hold on, plot(y,x,'*g')
+                
+                vdec = 0;
+                [~, ynew] = checkco(x, y + vdir, m); % se décalle verticalement
+                if isequal(ynew,y)
+                    ENDV = 1; % on a atteind un bord
+                else
+                    y = ynew;
+                end
+            else
+                vdec = vdec + 1;
+            end
+        end
+    end
+    if size(poc, 1) > 5
+        pocs{end+1} = poc;
+    end
+end
+toc
+
+
+%% measures
+
+
 for k = length(maxtab(:,1))
     Srec = Safn(freq2co(LOWR):freq2co(HIGHR),maxtab(k,1)-time2co(0.1):maxtab(k,1)+shftw);
     for i = 1:size(Srec,1)
@@ -206,8 +285,6 @@ for k = length(maxtab(:,1))
     end
     break
 end
-toc
-
 
 %% getpeakseparated
 [pks, locs, over] = getpeakseparated(sumit,1,0,1.3*min(sumit));
