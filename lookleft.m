@@ -6,10 +6,10 @@ function [xnew, ynew, bool] = lookleft(x, y, m)
     dec = 0;
     while (~zerotoone || ~onetozero) && dec <= 5
         [xnew, ynew] = checkco(xnew - 1, ynew, m);
-        if ~onetozero && ~zerotoone && ~isequal(m(xnew,ynew),0)
+        if ~onetozero && ~zerotoone && ~isequal(m(ynew,xnew),0)
             zerotoone = 1;
         end
-        if ~onetozero && zerotoone && isequal(m(xnew,ynew),0)
+        if ~onetozero && zerotoone && isequal(m(ynew,xnew),0)
             onetozero = 1;
         end
         dec = dec + 1;
