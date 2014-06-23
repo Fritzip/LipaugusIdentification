@@ -7,7 +7,7 @@ lipoalgopaths;
 global fs nfft ovlp T F
 
 % Read .wav file
-[x, fs] = audioread('120119_071_mono3.WAV',[round(2700*44100) round(2900*44100)]);
+[x, fs] = audioread('120119_071_mono3.WAV',[round(3100*44100) round(3300*44100)]);
 
 % Stereo to mono
 x = stereo2mono(x);
@@ -115,6 +115,7 @@ toc
 %%%%%%%%%%%%%%%%%%%%%%%
 
 for i = 2:length(maxtab(:,1))
+    disp(i)
     % Get position (time) of calls
     val = maxtab(i,1);
     [tinf, tsup] = findtco(val, shftw); %%%%%%%%%%% /!\ ARBITRARY CONST IN FUNCTION %%%%%%%%%%%
@@ -138,9 +139,9 @@ for i = 2:length(maxtab(:,1))
     xlim([co2time(tinf)-3 co2time(tsup)+3])
     
     % Plot
-    figure(2)
-    subplot(131), plotmat(T(trange),F(frange),log(Sreca)); title('Raw')
-    subplot(132), plotmat(m); title('The matrix to treat'), hold on % T(trange),F(frange),
+    %figure(2)
+    %subplot(131), plotmat(T(trange),F(frange),log(Sreca)); title('Raw')
+    %subplot(132), plotmat(m); title('The matrix to treat'), hold on % T(trange),F(frange),
     
     
     
@@ -203,7 +204,7 @@ for i = 2:length(maxtab(:,1))
         %I = co2freq(I+freq2co(LOWR));
         %J = co2time(J)+co2time(tinf);
 
-        maxh = 4;
+        maxh = 3;
         maxv = 3;
 
         poc = []; % piece of curve
@@ -221,7 +222,7 @@ for i = 2:length(maxtab(:,1))
                 % HORIZONTAL
                 hdec = 0;
                 ENDH = 0;
-                %sprintf('x = %d\ty = %d'
+
                 if isequal(mnew(y,x),0)
                     [xout, yout, bool] = lookleft(x, y, mnew);
                     if bool
@@ -251,7 +252,7 @@ for i = 2:length(maxtab(:,1))
                     %disp('Found a junction')
                     % on poursuit
                     poc = [poc; x y]; % append (x, y) to the list 
-                    [x2, ~] = checkco(x + 10, y, mnew);
+                    [x2, ~] = checkco(x + 15, y, mnew);
                     mask(y, x:x2) = 0; % update mask
                     %size(mask)
                     mnew = mnew.*mask;
@@ -270,14 +271,15 @@ for i = 2:length(maxtab(:,1))
                 end
             end
         end
-        if size(poc, 1) > 10
+        if size(poc, 1) > 15
             pocs{end+1} = poc;
         end
     end
     toc
 
-    for i = 1:size(pocs,2)
-        figure(2), subplot(133), plot(pocs{i}(:,1),pocs{i}(:,2),'*'), ylim([0 101]), hold on
+    colors = {'*k','*g','*b','*r','*m','*y','*c'};
+    for j = 1:size(pocs,2)
+        figure(2), subplot(133), plot(pocs{j}(:,1),pocs{j}(:,2),colors{rem(j,7)+1}), ylim([0 101]), hold on
     end
     hold off
 
@@ -290,8 +292,8 @@ for i = 2:length(maxtab(:,1))
 
 
 
-    a = 1;
-    while a
-        a = ~waitforbuttonpress;
-    end
+%     a = 1;
+%     while a
+%         a = ~waitforbuttonpress;
+%     end
 end
