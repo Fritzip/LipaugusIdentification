@@ -9,3 +9,6 @@ addpath([[pwd '/'] 'spectro']);
 addpath([[pwd '/'] 'globalfn']);
 addpath([[pwd '/'] 'conversion']);
 addpath([[pwd '/'] 'peaks']);
+addpath([[pwd '/'] 'curvefit']);
+addpath([[pwd '/'] 'treatmentfn']);
+addpath([[pwd '/'] 'measurmentsfn']);

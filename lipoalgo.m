@@ -156,7 +156,7 @@ for i = 2:length(maxtab(:,1))
     mod = zeros(size(m));
     mask = ones(size(m));
     
-    subplot(133), plotmat(m); title('15% less')
+    subplot(133), plotmat(m); title('15% less'), hold on
     
     
     
@@ -194,8 +194,8 @@ while ~isequal(sum(m(:).*mask(:)),0)
     %I = co2freq(I+freq2co(LOWR));
     %J = co2time(J)+co2time(tinf);
 
-    plot(J,I,'*g')
-    hold on
+    %plot(J,I,'*g')
+    %hold on
 
     maxh = 5;
     maxv = 5;
@@ -239,14 +239,14 @@ while ~isequal(sum(m(:).*mask(:)),0)
 
             if isequal(ENDH,1)
                 % on poursuit
-                poc = [poc; x y]; % append (x, y) to the list 
+                poc = [poc; x y] % append (x, y) to the list 
                 mask(y, x:x + 5) = 0; % update mask
-                
-                subplot(133), plotmat(m.*mask), hold on, plot(y,x,'*g')
-                
+                size(mask)
+                figure(2), plotmat(m.*mask), hold on, plot(x,y,'*g'), hold off 
+                waitforbuttonpress;
                 vdec = 0;
                 [~, ynew] = checkco(x, y + vdir, m); % se décalle verticalement
-                if isequal(ynew,y)
+                if isequal(ynew, y)
                     ENDV = 1; % on a atteind un bord
                 else
                     y = ynew;
