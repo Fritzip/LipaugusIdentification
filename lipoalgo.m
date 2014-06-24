@@ -7,7 +7,7 @@ lipoalgopaths;
 global fs nfft ovlp T F
 
 % Read .wav file
-[x, fs] = audioread('120119_071_mono3.WAV',[round(3100*44100) round(3300*44100)]);
+[x, fs] = audioread('120119_071_mono3.WAV',[round(2400*44100) round(2600*44100)]);
 
 % Stereo to mono
 x = stereo2mono(x);
@@ -188,7 +188,8 @@ for i = 2:length(maxtab(:,1))
     tic
 
     mask = ones(size(m));
-
+    mnew = m;
+    
     % Plot
     figure(2)
     subplot(131), plotmat(T(trange),F(frange),log(Sreca)); title('Raw')
@@ -197,8 +198,8 @@ for i = 2:length(maxtab(:,1))
 
     pocs = {};
 
-    while ~isequal(sum(m(:).*mask(:)),0)
-        mnew = m.*mask;
+    while ~isequal(sum(mnew(:)),0)
+        
         [val, ind] = max(mnew(:));
         [I, J] = ind2sub(size(mnew),ind);
         %I = co2freq(I+freq2co(LOWR));
@@ -255,14 +256,15 @@ for i = 2:length(maxtab(:,1))
                     [x2, ~] = checkco(x + 15, y, mnew);
                     mask(y, x:x2) = 0; % update mask
                     %size(mask)
-                    mnew = mnew.*mask;
                     %figure(2), subplot(133), plotmat(mnew), hold on, plot(x,y,'*g'), hold off 
                     %waitforbuttonpress;
                     vdec = 0;
                 else
                     x = x - hdir*hdec;
+                    mask(y,x) = 0;
                     vdec = vdec + 1;
                 end
+                mnew = mnew.*mask;
                 [~, ynew] = checkco(x, y + vdir, mnew); % se décalle verticalement
                 if isequal(ynew, y)
                     ENDV = 1; % on a atteind un bord
