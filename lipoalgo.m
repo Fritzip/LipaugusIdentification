@@ -164,8 +164,8 @@ for i = 2:length(maxtab(:,1))
         %I = co2freq(I+freq2co(LOWR));
         %J = co2time(J)+co2time(tinf);
 
-        maxh = 5;
-        maxv = 3;
+        maxh = 5; %%%%%%%%%%% /!\ ARBITRARY CONST %%%%%%%%%%%
+        maxv = 3; %%%%%%%%%%% /!\ ARBITRARY CONST %%%%%%%%%%%
 
         poc = []; % piece of curve
         for vdir = -1:2:1 % direction vertical (+1 monte, -1 descend)
@@ -211,7 +211,7 @@ for i = 2:length(maxtab(:,1))
                     % Found a junction
                     % on poursuit
                     poc = [poc; x y]; % append (x, y) to the list 
-                    [x2, ~] = checkco(x + 15, y, mnew);
+                    [x2, ~] = checkco(x + 15, y, mnew);  %%%%%%%%%%% /!\ ARBITRARY CONST %%%%%%%%%%%
                     mask(y, x:x2) = 0; % update mask
                     %figure(2), subplot(133), plotmat(mnew), hold on, plot(x,y,'*g'), hold off 
                     vdec = 0;
@@ -229,15 +229,20 @@ for i = 2:length(maxtab(:,1))
                 end
             end
         end
-        if size(poc, 1) > 15
+        if size(poc, 1) > 15  %%%%%%%%%%% /!\ ARBITRARY CONST %%%%%%%%%%%
             pocs{end+1} = poc;
         end
     end
     toc
 
-    colors = {'*k','*g','*b','*r','*m','*y','*c'};
+    colors = {'.k','.g','.b','.m','.y','.c'};
     for j = 1:size(pocs,2)
-        figure(2), subplot(133), plot(pocs{j}(:,1),pocs{j}(:,2),colors{rem(j,7)+1}), ylim([0 101]), hold on
+        [xi,yi,wi] = readpocs(pocs{j});
+        [yy,ind] = sort(yi);
+        xx = smooth(yi,xi,0.3,'rloess'); 
+        figure(2), subplot(133)
+        plot(xi,yi,colors{rem(j,6)+1}), xlim([0 78]),ylim([0 101]), hold on
+        plot(xx(ind),yy,'r-','LineWidth',2)
     end
     hold off
 
