@@ -96,7 +96,7 @@ plotmat(T,F,log(Sa)), hold on
 
 for i = 1:size(maxtab,1)
     dec = 30;
-    if isequal(rem(i,2),0)
+    if isequal(mod(i,2),0)
         color = 'b';
         dec = -dec;
     else
@@ -133,20 +133,14 @@ for i = 2:length(maxtab(:,1))
     BWs = [BWsa, BWsaf];
     m = rmnoisepts(BWs,35); %%%%%%%%%%% /!\ ARBITRARY CONST %%%%%%%%%%%
     
-   
     figure(1)
     xlim([co2time(tinf)-3 co2time(tsup)+3])
-    
-    
-    mod = zeros(size(m));
-    mask = ones(size(m));
-
 
     %%%%%%%%%%%%%%%%%%%%%%%
     % Measurments
     %%%%%%%%%%%%%%%%%%%%%%%
     tic
-
+%%
     mask = ones(size(m));
     mnew = m;
     
@@ -169,9 +163,9 @@ for i = 2:length(maxtab(:,1))
 
         poc = []; % piece of curve
         for vdir = -1:2:1 % direction vertical (+1 monte, -1 descend)
-            % Initialisation x, y
-            x = J;
-            y = I;
+            disp('Initialisation x, y')
+            x = J
+            y = I
 
             % VERTICAL
             ENDV = 0;
@@ -185,40 +179,45 @@ for i = 2:length(maxtab(:,1))
                 if isequal(mnew(y,x),0)
                     [xout, yout, bool] = lookleft(x, y, mnew);
                     if bool
-                        % Funky left
-                        x = xout;
-                        y = yout;
+                        disp('Funky left')
+                        x = xout
+                        y = yout
                         ENDH = 1;
                     else
-                        % Going right
+                        disp('Going right')
                         hdir = 1;
                     end
                 else
-                    % Going left
+                    disp('Going left')
                     hdir = -1;
                 end
 
                 while ~ENDH && hdec < maxh
-                    % Searching for junction …
+                    disp('Searching for junction …')
                     % tant qu'on n'a pas rencontré une jonction (0, ~0), on se décale (5x max) 
                     hdec = hdec + 1; % on incrémente le décalage
-                    [x, y, ENDH] = checkandgo(x, y, mnew, hdir); % on tente le décalalage
+                    [x, y, ENDH] = checkandgo(x, y, mnew, hdir) % on tente le décalalage
+                    % ENDH = 2 : on est au bord de l'image
                     % ENDH = 1 : on a trouver une jonction
                     % ENDH = 0 : on continue à se décaller OU on est au bord de l'image
                 end
 
                 if isequal(ENDH,1)
-                    % Found a junction
+                    disp('Found a junction')
                     % on poursuit
-                    poc = [poc; x y]; % append (x, y) to the list 
+                    poc = [poc; x y] % append (x, y) to the list 
                     [x2, ~] = checkco(x + 15, y, mnew);  %%%%%%%%%%% /!\ ARBITRARY CONST %%%%%%%%%%%
                     mask(y, x:x2) = 0; % update mask
                     %figure(2), subplot(133), plotmat(mnew), hold on, plot(x,y,'*g'), hold off 
                     vdec = 0;
-                else
+                elseif isequal(ENDH,0)
                     x = x - hdir*hdec;
                     mask(y,x) = 0;
                     vdec = vdec + 1;
+                elseif isequal(ENDH,2)
+                        %eauie
+                else
+                    disp('Erroooor !!')
                 end
                 mnew = mnew.*mask;
                 [~, ynew] = checkco(x, y + vdir, mnew); % se décalle verticalement
