@@ -8,7 +8,7 @@ global fs nfft ovlp T F
 
 % Read .wav file
 %[x, fs] = audioread('lipo.WAV');
-[x, fs] = audioread('120119_071_mono3.WAV',[round(2400*44100) round(2600*44100)]);
+[x, fs] = audioread('120319_095_mono5.wav',[round(2400*44100) round(2600*44100)]);
 
 % Stereo to mono
 x = stereo2mono(x);
@@ -96,7 +96,7 @@ plotmat(T,F,log(Sa)), hold on
 
 for i = 1:size(maxtab,1)
     dec = 30;
-    if isequal(mod(i,2),0)
+    if isequal(rem(i,2),0)
         color = 'b';
         dec = -dec;
     else
@@ -235,17 +235,37 @@ for i = 2:length(maxtab(:,1))
     end
     toc
 
-    colors = {'.k','.g','.b','.m','.y','.c'};
+    colors = {'.m','.g','.b','.y','.c','.k'};
+%     out = zeros(size(m)*100);
+    
     for j = 1:size(pocs,2)
         [xi,yi,wi] = readpocs(pocs{j});
+        
+        % Normal
+%         yy = smooth(xi,yi,0.3,'rloess'); 
+%         figure(2), subplot(133)
+%         plot(xi,yi,colors{rem(j,6)+1}), xlim([0 78]),ylim([0 101]), hold on
+%         plot(xi,yy,'r-','LineWidth',2)
+        
+        % Reverse
         [yy,ind] = sort(yi);
         xx = smooth(yi,xi,0.3,'rloess'); 
         figure(2), subplot(133)
-        plot(xi,yi,colors{rem(j,6)+1}), xlim([0 78]),ylim([0 101]), hold on
+        plot(xi,yi,colors{rem(j,6)+1}), xlim([0 78]), ylim([0 101]), hold on
         plot(xx(ind),yy,'r-','LineWidth',2)
+        
+%         out(sub2ind(size(out),round(yy*100),round(xx(ind)*100))) = 1;
+        
+        %[fit, gof] = createFitLin(xi,yi);
+        %plot(fit)
     end
     hold off
 
+%     out = imresize(out, size(m));
+%     for k = 1:size(out,1)
+%         
+%     end
+%     figure(3), imagesc(out)
 
     a = 1;
     while a

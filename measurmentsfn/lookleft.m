@@ -4,7 +4,7 @@ function [xnew, ynew, bool] = lookleft(x, y, m)
     zerotoone = 0;
     onetozero = 0;
     dec = 0;
-    while (~zerotoone || ~onetozero) && dec <= 5
+    while (~zerotoone || ~onetozero) && dec <= 3
         [xnew, ynew] = checkco(xnew - 1, ynew, m);
         if ~onetozero && ~zerotoone && ~isequal(m(ynew,xnew),0)
             zerotoone = 1;
