@@ -8,7 +8,7 @@ global fs nfft ovlp T F
 
 % Read .wav file
 %[x, fs] = audioread('lipo.WAV');
-[x, fs] = audioread('120319_095_mono5.wav',[round(2400*44100) round(2600*44100)]);
+[x, fs] = audioread('120319_095_mono2.wav',[round(2400*44100) round(2600*44100)]);
 
 % Stereo to mono
 x = stereo2mono(x);
@@ -157,8 +157,8 @@ for i = 2:length(maxtab(:,1))
         %I = co2freq(I+freq2co(LOWR));
         %J = co2time(J)+co2time(tinf);
 
-        maxh = 5; %%%%%%%%%%% /!\ ARBITRARY CONST %%%%%%%%%%%
-        maxv = 3; %%%%%%%%%%% /!\ ARBITRARY CONST %%%%%%%%%%%
+        maxh = 5;  %%%%%%%%%%% /!\ ARBITRARY CONST %%%%%%%%%%%
+        maxv = 15; %%%%%%%%%%% /!\ ARBITRARY CONST %%%%%%%%%%%
 
         poc = []; % piece of curve
         for vdir = -1:2:1 % direction vertical (+1 monte, -1 descend)
@@ -250,22 +250,33 @@ for i = 2:length(maxtab(:,1))
         figure(2), subplot(133)
         plot(xi,yi,colors{rem(j,6)+1}), xlim([0 78]), ylim([0 101]), hold on
         plot(xx(ind),yy,'r-','LineWidth',2)
-        
-%         out(sub2ind(size(out),round(yy*100),round(xx(ind)*100))) = 1;
-        
+%         [xx100, yy100] = checkco(round(xx(ind)*100), round(yy*100), out);
+%         out(sub2ind(size(out),yy100,xx100)) = 1;
         %[fit, gof] = createFitLin(xi,yi);
         %plot(fit)
     end
     hold off
 
+%     seuil = [10 20 30 50 60 70];
+% 
 %     out = imresize(out, size(m));
-%     for k = 1:size(out,1)
-%         
+%     out = out./max(out(:));
+% 
+%     delta = 0.1;         %%%%%%%%%%% /!\ ARBITRARY CONST %%%%%%%%%%%
+%     for j = 1:length(seuil)
+%         pks = peakdet(out(seuil(j),:), delta, 1:length(out(seuil(j),:)));
 %     end
-%     figure(3), imagesc(out)
+%     
+%     figure(4), plot(out(40,:)), hold on
+%     if ~isempty(uie)
+%         plot(uie(:,1),uie(:,2),'*r')
+%     end
+%     hold off
+% 
+%     figure(3), plotmat(out)
 
-%     a = 1;
-%     while a
-%         a = ~waitforbuttonpress;
-%     end
+    a = 1;
+    while a
+        a = ~waitforbuttonpress;
+    end
 end
