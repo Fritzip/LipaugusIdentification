@@ -117,6 +117,7 @@ toc
 
 for i = 2:length(maxtab(:,1))
     disp(i)
+    
     % Get position (time) of calls
     val = maxtab(i,1);
     [tinf, tsup] = findtco(val, shftw); %%%%%%%%%%% /!\ ARBITRARY CONST IN FUNCTION %%%%%%%%%%%
@@ -139,16 +140,14 @@ for i = 2:length(maxtab(:,1))
     %%%%%%%%%%%%%%%%%%%%%%%
     % Measurments
     %%%%%%%%%%%%%%%%%%%%%%%
-    tic
-%%
-    mask = ones(size(m));
-    mnew = m;
-    
+
     % Plot
     figure(2)
     subplot(131), plotmat(T(trange),F(frange),log(Sreca)); title('Raw')
     subplot(132), plotmat(m); title('The matrix to treat')
 
+    mask = ones(size(m));
+    mnew = m;
     pocs = {};
 
     while ~isequal(sum(mnew(:)),0)
@@ -163,9 +162,9 @@ for i = 2:length(maxtab(:,1))
 
         poc = []; % piece of curve
         for vdir = -1:2:1 % direction vertical (+1 monte, -1 descend)
-            disp('Initialisation x, y')
-            x = J
-            y = I
+            % disp('Initialisation x, y')
+            x = J;
+            y = I;
 
             % VERTICAL
             ENDV = 0;
@@ -179,47 +178,47 @@ for i = 2:length(maxtab(:,1))
                 if isequal(mnew(y,x),0)
                     [xout, yout, bool] = lookleft(x, y, mnew);
                     if bool
-                        disp('Funky left')
-                        x = xout
-                        y = yout
+                        % disp('Funky left')
+                        x = xout;
+                        y = yout;
                         ENDH = 1;
                     else
-                        disp('Going right')
+                        %disp('Going right')
                         hdir = 1;
                     end
                 else
-                    disp('Going left')
+                    %disp('Going left')
                     hdir = -1;
                 end
 
                 while ~ENDH && hdec < maxh
-                    disp('Searching for junction …')
+                    %disp('Searching for junction …')
                     % tant qu'on n'a pas rencontré une jonction (0, ~0), on se décale (5x max) 
                     hdec = hdec + 1; % on incrémente le décalage
-                    [x, y, ENDH] = checkandgo(x, y, mnew, hdir) % on tente le décalalage
+                    [x, y, ENDH] = hcheckandgo(x, y, mnew, hdir); % on tente le décallage
                     % ENDH = 2 : on est au bord de l'image
-                    % ENDH = 1 : on a trouver une jonction
-                    % ENDH = 0 : on continue à se décaller OU on est au bord de l'image
+                    % ENDH = 1 : on a trouvé une jonction
+                    % ENDH = 0 : on continue à se décaller
                 end
 
                 if isequal(ENDH,1)
-                    disp('Found a junction')
-                    % on poursuit
-                    poc = [poc; x y] % append (x, y) to the list 
+                    %disp('Found a junction')
+                    poc = [poc; x y]; % append (x, y) to the list 
                     [x2, ~] = checkco(x + 15, y, mnew);  %%%%%%%%%%% /!\ ARBITRARY CONST %%%%%%%%%%%
                     mask(y, x:x2) = 0; % update mask
-                    %figure(2), subplot(133), plotmat(mnew), hold on, plot(x,y,'*g'), hold off 
                     vdec = 0;
-                elseif isequal(ENDH,0)
+                elseif isequal(ENDH,0) % no junction
                     x = x - hdir*hdec;
                     mask(y,x) = 0;
                     vdec = vdec + 1;
-                elseif isequal(ENDH,2)
-                        %eauie
-                else
-                    disp('Erroooor !!')
+                elseif isequal(ENDH,2) % x edges
+                    mask(y,x) = 0;
+                    vdec = vdec + 1;
                 end
-                mnew = mnew.*mask;
+                
+                mnew = mnew.*mask; % update mnew
+                
+                % vcheckandgo
                 [~, ynew] = checkco(x, y + vdir, mnew); % se décalle verticalement
                 if isequal(ynew, y)
                     ENDV = 1; % on a atteind un bord
@@ -232,7 +231,6 @@ for i = 2:length(maxtab(:,1))
             pocs{end+1} = poc;
         end
     end
-    toc
 
     colors = {'.m','.g','.b','.y','.c','.k'};
 %     out = zeros(size(m)*100);
@@ -266,8 +264,8 @@ for i = 2:length(maxtab(:,1))
 %     end
 %     figure(3), imagesc(out)
 
-    a = 1;
-    while a
-        a = ~waitforbuttonpress;
-    end
+%     a = 1;
+%     while a
+%         a = ~waitforbuttonpress;
+%     end
 end
