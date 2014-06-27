@@ -8,7 +8,7 @@ global fs nfft ovlp T F
 
 % Read .wav file
 %[x, fs] = audioread('lipo.WAV');
-[x, fs] = audioread('120319_095_mono2.wav',[round(2400*44100) round(2600*44100)]);
+[x, fs] = audioread('120119_071_mono1.wav',[round(2400*44100) round(2600*44100)]);
 
 % Stereo to mono
 x = stereo2mono(x);
@@ -27,7 +27,7 @@ ovlp = 25;
 hop = round(ovlp*wlen/100);
 nfft = wlen;
 
-% Constants
+% Constants (Hz)
 HIGH = 6000;
 LOW = 1000;
 HIGHR = 5600;
@@ -62,7 +62,7 @@ Saf =filter2(h,Sa);
 
 % Neighborhood and Block Processing
 f = @(x) min(x(:));
-Safn = nlfilter(Saf,[20 2],f); %%%%%%%%%%% /!\ ARBITRARY CONST %%%%%%%%%%%
+Safn = nlfilter(Saf,[20 2],f); %%%%%%%%%%% /!\ ARBITRARY CONST in pixel %%%%%%%%%%%
 
 % % Plot Spectro 
 % plotmat(T,F,log(Sa));
@@ -78,9 +78,9 @@ toc
 
 tic
 % Sum of all intensity
-shftw = time2co(1.2); % Pie + Hau average lengths %%%%%% /!\ CONST %%%%%%
+shftw = time2co(1.2); % Pi + Hau average lengths %%%%%% /!\ CONST %%%%%%
 
-pas = 1;
+pas = 1; % en pixel
 sumit = zeros(ceil((size(Safn,2)-shftw)/pas),1);
 for i = pas:pas:(size(Safn,2)-shftw)
     sumit(i/pas) = sum(sum(abs(Safn(freq2co(LOWR):freq2co(HIGHR),i:i+shftw))));
@@ -88,7 +88,7 @@ end
 
 % Peak detection
 delta = 20;         %%%%%%%%%%% /!\ ARBITRARY CONST %%%%%%%%%%%
-[maxtab, mintab]=peakdet(sumit, delta, 1:length(sumit));
+[maxtab, ~] = peakdet(sumit, delta, 1:length(sumit));
 
 % Plot spectro and rectangles
 figure(1)
@@ -132,7 +132,9 @@ for i = 2:length(maxtab(:,1))
     BWsa = findedges(Sreca);
     BWsaf = findedges(Srecaf);
     BWs = [BWsa, BWsaf];
-    m = rmnoisepts(BWs,35); %%%%%%%%%%% /!\ ARBITRARY CONST %%%%%%%%%%%
+    
+    % Apply BWareaopen (matlab function)
+    m = rmnoisepts(BWs,35); %%%%%%%%%%% /!\ ARBITRARY CONST %%%%%%%%%%% taille minimale bloc en pixels
     
     figure(1)
     xlim([co2time(tinf)-3 co2time(tsup)+3])
@@ -157,10 +159,13 @@ for i = 2:length(maxtab(:,1))
         %I = co2freq(I+freq2co(LOWR));
         %J = co2time(J)+co2time(tinf);
 
+       % New piece of curve (poc)
+        poc = [];
+        
+        % Tolérance au décalage horizontale / verticale
         maxh = 5;  %%%%%%%%%%% /!\ ARBITRARY CONST %%%%%%%%%%%
         maxv = 15; %%%%%%%%%%% /!\ ARBITRARY CONST %%%%%%%%%%%
-
-        poc = []; % piece of curve
+        
         for vdir = -1:2:1 % direction vertical (+1 monte, -1 descend)
             % disp('Initialisation x, y')
             x = J;
@@ -202,7 +207,6 @@ for i = 2:length(maxtab(:,1))
                 end
 
                 if isequal(ENDH,1)
-                    %disp('Found a junction')
                     poc = [poc; x y]; % append (x, y) to the list 
                     [x2, ~] = checkco(x + 15, y, mnew);  %%%%%%%%%%% /!\ ARBITRARY CONST %%%%%%%%%%%
                     mask(y, x:x2) = 0; % update mask
@@ -227,21 +231,25 @@ for i = 2:length(maxtab(:,1))
                 end
             end
         end
+        % Enregistre la portion de courbe si + de 15 px
         if size(poc, 1) > 15  %%%%%%%%%%% /!\ ARBITRARY CONST %%%%%%%%%%%
-            pocs{end+1} = poc;
+            pocs{end+1} = struct('data',poc);
         end
     end
 
-    colors = {'.m','.g','.b','.y','.c','.k'};
+    colors = {'.y','.g','.b','.m','.c','.k'};
 %     out = zeros(size(m)*100);
     
     for j = 1:size(pocs,2)
-        [xi,yi,wi] = readpocs(pocs{j});
+        [xi,yi] = readpocs(pocs{j}.data);
         
         % Normal
 %         yy = smooth(xi,yi,0.3,'rloess'); 
 %         figure(2), subplot(133)
 %         plot(xi,yi,colors{rem(j,6)+1}), xlim([0 78]),ylim([0 101]), hold on
+%         sortpoc = sortrows(pocs{j}.data,1);
+%         xyb = sortpoc(round(size(pocs{j}.data,1)/2),:);
+%         plot(xyb(1),xyb(2),'*r')
 %         plot(xi,yy,'r-','LineWidth',2)
         
         % Reverse
@@ -250,9 +258,11 @@ for i = 2:length(maxtab(:,1))
         figure(2), subplot(133)
         plot(xi,yi,colors{rem(j,6)+1}), xlim([0 78]), ylim([0 101]), hold on
         plot(xx(ind),yy,'r-','LineWidth',2)
+        
 %         [xx100, yy100] = checkco(round(xx(ind)*100), round(yy*100), out);
 %         out(sub2ind(size(out),yy100,xx100)) = 1;
-        %[fit, gof] = createFitLin(xi,yi);
+        fit = createFitLin(xi,yi);
+        pocs{j}.crease = sign(fit.p1);
         %plot(fit)
     end
     hold off
