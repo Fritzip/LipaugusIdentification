@@ -8,7 +8,7 @@ global fs nfft ovlp T F
 
 % Read .wav file
 %[x, fs] = audioread('lipo.WAV');
-[x, fs] = audioread('120119_071_mono1.wav',[round(2400*44100) round(2600*44100)]);
+[x, fs] = audioread('120319_095_mono3.wav',[round(2400*44100) round(2600*44100)]);
 
 % Stereo to mono
 x = stereo2mono(x);
@@ -62,7 +62,10 @@ Saf =filter2(h,Sa);
 
 % Neighborhood and Block Processing
 f = @(x) min(x(:));
-Safn = nlfilter(Saf,[20 2],f); %%%%%%%%%%% /!\ ARBITRARY CONST in pixel %%%%%%%%%%%
+
+%%%%%%%%%%% /!\ CONSTANTES ARBITRAIRES MAIS DÉPENDANTES DES C.I. %%%%%%%%%%%
+%%%%%%%%%%% (en pixel ~ carré de 2*20)
+Safn = nlfilter(Saf,[freq2co(1800) time2co(0.04)],f); 
 
 % % Plot Spectro 
 % plotmat(T,F,log(Sa));
@@ -78,7 +81,7 @@ toc
 
 tic
 % Sum of all intensity
-shftw = time2co(1.2); % Pi + Hau average lengths %%%%%% /!\ CONST %%%%%%
+shftw = time2co(1.2); % Pi + Hau average lengths %%%%%% CONST %%%%%%
 
 pas = 1; % en pixel
 sumit = zeros(ceil((size(Safn,2)-shftw)/pas),1);
@@ -88,13 +91,18 @@ end
 
 % Peak detection
 delta = 20;         %%%%%%%%%%% /!\ ARBITRARY CONST %%%%%%%%%%%
-[maxtab, ~] = peakdet(sumit, delta, 1:length(sumit));
+% delta correspond à la sensibilité de la détection. Plus delta diminu,
+% plus on obtient de pks (peaks), et inversement. On peut alors ce servir
+% de se paramètre pour être plus ou moins sensible. 
+[pks, ~] = peakdet(sumit, delta, 1:length(sumit));
 
+figure(1), plot(sumit), hold on, plot(pks(:,1),pks(:,2),'*r'), hold off
+%%
 % Plot spectro and rectangles
 figure(1)
 plotmat(T,F,log(Sa)), hold on
 
-for i = 1:size(maxtab,1)
+for i = 1:size(pks,1)
     dec = 30;
     if isequal(mod(i,2),0)
         color = 'b';
@@ -102,7 +110,7 @@ for i = 1:size(maxtab,1)
     else
         color = 'k';
     end
-    rectangle('Position',[co2time(maxtab(i,1))-0.2,1100+dec,1.6,4500],...
+    rectangle('Position',[co2time(pks(i,1))-0.15,1100+dec,1.6,4500],...
             'Curvature',[0.4,0.8],...
             'LineWidth',2,...
             'LineStyle','--',...
@@ -111,16 +119,18 @@ for i = 1:size(maxtab,1)
 end
 hold off
 toc
+
 %%%%%%%%%%%%%%%%%%%%%%%
 % Treatment 
 %%%%%%%%%%%%%%%%%%%%%%%
 
-for i = 2:length(maxtab(:,1))
+for i = 1:length(pks(:,1))
     disp(i)
     
     % Get position (time) of calls
-    val = maxtab(i,1);
-    [tinf, tsup] = findtco(val, shftw); %%%%%%%%%%% /!\ ARBITRARY CONST IN FUNCTION %%%%%%%%%%%
+    val = pks(i,1);
+    [tinf, tsup] = findtco(val, shftw, size(Safn,2)); %%%%%%%%%%% /!\ ARBITRARY CONST IN FUNCTION %%%%%%%%%%%
+    
     trange = tinf:tsup;
     frange = freq2co(LOWR):freq2co(HIGHR);
     
