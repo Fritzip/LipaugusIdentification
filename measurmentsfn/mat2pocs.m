@@ -85,7 +85,7 @@ function pocs = mat2pocs(m)
         end
         % Enregistre la portion de courbe si + de 15 px
         if size(poc, 1) > 15  %%%%%%%%%%% /!\ ARBITRARY CONST %%%%%%%%%%%
-            pocs{end+1} = struct('data',poc);
+            pocs{end+1} = struct('data', poc);
         end
     end
 end

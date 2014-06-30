@@ -124,6 +124,8 @@ toc
 % Treatment 
 %%%%%%%%%%%%%%%%%%%%%%%
 
+seg = cell(length(pks(:,1)),1);
+
 for i = 1:length(pks(:,1))
     disp(i)
     
@@ -145,143 +147,76 @@ for i = 1:length(pks(:,1))
     
     % Apply BWareaopen (matlab function)
     m = rmnoisepts(BWs,35); %%%%%%%%%%% /!\ ARBITRARY CONST %%%%%%%%%%% taille minimale bloc en pixels
-    
-    figure(1)
-    xlim([co2time(tinf)-3 co2time(tsup)+3])
 
     %%%%%%%%%%%%%%%%%%%%%%%
     % Measurments
     %%%%%%%%%%%%%%%%%%%%%%%
 
+    % Edges detector - get pieces of curve from matrix
+    seg{i} = mat2pocs(m);
+end
+% possibilité de fusionner les deux for (suppr line up line down)
+for i = 1:size(seg,1)
+    disp(i)
+    for j = 1:size(seg{i},2)
+        disp(j)
+        [seg{i}{j}.xi, seg{i}{j}.yi] = readpocs(seg{i}{j}.data);
+
+        % Normal
+    %         yy = smooth(xi,yi,0.3,'rloess'); 
+
+        % Reverse
+        [seg{i}{j}.yy, seg{i}{j}.ind] = sort(seg{i}{j}.yi);
+        seg{i}{j}.xx = smooth(seg{i}{j}.yi,seg{i}{j}.xi,0.3,'rloess'); 
+
+
+    %         [xx100, yy100] = checkco(round(xx(ind)*100), round(yy*100), out);
+    %         out(sub2ind(size(out),yy100,xx100)) = 1;
+        fit = createFitLin(seg{i}{j}.xi, seg{i}{j}.yi);
+        seg{i}{j}.crease = sign(fit.p1);
+
+        sortpoc = sortrows(seg{i}{j}.data,1);
+        xyb = sortpoc(round(size(seg{i}{j}.data,1)/2),:);
+        seg{i}{j}.xb = xyb(1);
+        seg{i}{j}.yb = xyb(2);
+
+        % Interpolation
+        seg{i}{j}.yq = 10:max(seg{i}{j}.yy);
+        seg{i}{j}.xq = interp1(seg{i}{j}.yy, seg{i}{j}.xx(seg{i}{j}.ind),seg{i}{j}.yq);
+    end
+end
+    
+%%
+
+    figure(1)
+    xlim([co2time(tinf)-3 co2time(tsup)+3])
+    
+    
     % Plot
     figure(2)
     subplot(131), plotmat(T(trange),F(frange),log(Sreca)); title('Raw')
     subplot(132), plotmat(m); title('The matrix to treat')
 
-    mask = ones(size(m));
-    mnew = m;
-    pocs = {};
-
-    while ~isequal(sum(mnew(:)),0)
-        
-        [val, ind] = max(mnew(:));
-        [I, J] = ind2sub(size(mnew),ind);
-        %I = co2freq(I+freq2co(LOWR));
-        %J = co2time(J)+co2time(tinf);
-
-       % New piece of curve (poc)
-        poc = [];
-        
-        % Tolérance au décalage horizontale / verticale
-        maxh = 5;  %%%%%%%%%%% /!\ ARBITRARY CONST %%%%%%%%%%%
-        maxv = 15; %%%%%%%%%%% /!\ ARBITRARY CONST %%%%%%%%%%%
-        
-        for vdir = -1:2:1 % direction vertical (+1 monte, -1 descend)
-            %disp('Initialisation x, y')
-            x = J;
-            y = I + double(vdir>0);
-
-            % VERTICAL
-            ENDV = 0;
-            vdec = 0;
-
-            while ~ENDV && vdec < maxv
-                % HORIZONTAL
-                hdec = 0;
-                ENDH = 0;
-
-                if isequal(mnew(y,x),0)
-                    [xout, yout, bool] = lookleft(x, y, mnew);
-                    if bool
-                        %disp('Funky left')
-                        x = xout;
-                        y = yout;
-                        ENDH = 1;
-                    else
-                        %disp('Going right')
-                        hdir = 1;
-                    end
-                else
-                    %disp('Going left')
-                    hdir = -1;
-                end
-
-                while ~ENDH && hdec < maxh
-                    %disp('Searching for junction …')
-                    % tant qu'on n'a pas rencontré une jonction (0, ~0), on se décale (5x max) 
-                    hdec = hdec + 1; % on incrémente le décalage
-                    [x, y, ENDH] = hcheckandgo(x, y, mnew, hdir); % on tente le décallage
-                    % ENDH = 2 : on est au bord de l'image
-                    % ENDH = 1 : on a trouvé une jonction
-                    % ENDH = 0 : on continue à se décaller
-                end
-
-                if isequal(ENDH,1)
-                    poc = [poc; x y]; % append (x, y) to the list 
-                    [x2, ~] = checkco(x + 15, y, mnew);  %%%%%%%%%%% /!\ ARBITRARY CONST %%%%%%%%%%%
-                    mask(y, x:x2) = 0; % update mask
-                    vdec = 0;
-                elseif isequal(ENDH,0) % no junction
-                    x = x - hdir*hdec;
-                    mask(y,x) = 0;
-                    vdec = vdec + 1;
-                elseif isequal(ENDH,2) % x edges
-                    mask(y,x) = 0;
-                    vdec = vdec + 1;
-                end
-                
-                mnew = mnew.*mask; % update mnew
-                
-                % vcheckandgo
-                [~, ynew] = checkco(x, y + vdir, mnew); % se décalle verticalement
-                if isequal(ynew, y)
-                    ENDV = 1; % on a atteind un bord
-                else
-                    y = ynew;
-                end
-            end
-        end
-        % Enregistre la portion de courbe si + de 15 px
-        if size(poc, 1) > 15  %%%%%%%%%%% /!\ ARBITRARY CONST %%%%%%%%%%%
-            pocs{end+1} = struct('data',poc);
-        end
-    end
-
-    colors = {'.y','.g','.b','.m','.c','.k'};
+        colors = {'.y','.g','.b','.m','.c','.k'};
 %     out = zeros(size(m)*100);
     
-    for j = 1:size(pocs,2)
-        [xi,yi] = readpocs(pocs{j}.data);
-        
-        % Normal
-%         yy = smooth(xi,yi,0.3,'rloess'); 
+
+    
 %         figure(2), subplot(133)
 %         plot(xi,yi,colors{rem(j,6)+1}), xlim([0 78]),ylim([0 101]), hold on
-%         sortpoc = sortrows(pocs{j}.data,1);
-%         xyb = sortpoc(round(size(pocs{j}.data,1)/2),:);
-%         plot(xyb(1),xyb(2),'*r')
 %         plot(xi,yy,'r-','LineWidth',2)
         
-        % Reverse
-        [yy,ind] = sort(yi);
-        xx = smooth(yi,xi,0.3,'rloess'); 
         figure(2), subplot(133)
 %          plot(xi,yi,colors{rem(j,6)+1}), xlim([0 78]), ylim([0 101]), hold on
 %          plot(xx(ind),yy,'r*'), xlim([0 78]), ylim([0 101]), hold on
         
-%         [xx100, yy100] = checkco(round(xx(ind)*100), round(yy*100), out);
-%         out(sub2ind(size(out),yy100,xx100)) = 1;
-        fit = createFitLin(xi,yi);
-        pocs{j}.crease = sign(fit.p1);
-        %plot(fit)
+            %plot(fit)
+    plot(seg{j}.xb, seg{j}.yb, '*r'), hold on
+        plot(seg{j}.xq, seg{j}.yq), xlim([0 78]), ylim([0 101]), hold on
         
-        % Interpolation
-        yq = 10:max(yy);
-        xq = interp1(yy,xx(ind),yq);
-        plot(xq,yq), xlim([0 78]), ylim([0 101]), hold on
-    end
     hold off
 
+    
 %     seuil = [10 20 30 50 60 70];
 % 
 %     out = imresize(out, size(m));
@@ -300,8 +235,16 @@ for i = 1:length(pks(:,1))
 % 
 %     figure(3), plotmat(out)
 
+
+
+
+
+
+
+
+
+    % Press key to continue
     a = 1;
     while a
         a = ~waitforbuttonpress;
     end
-end
