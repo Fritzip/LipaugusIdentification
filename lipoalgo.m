@@ -96,8 +96,8 @@ delta = 20;         %%%%%%%%%%% /!\ ARBITRARY CONST %%%%%%%%%%%
 % de se paramètre pour être plus ou moins sensible. 
 [pks, ~] = peakdet(sumit, delta, 1:length(sumit));
 
-figure(1), plot(sumit), hold on, plot(pks(:,1),pks(:,2),'*r'), hold off
-%%
+%figure(1), plot(sumit), hold on, plot(pks(:,1),pks(:,2),'*r'), hold off
+
 % Plot spectro and rectangles
 figure(1)
 plotmat(T,F,log(Sa)), hold on
@@ -177,9 +177,9 @@ for i = 1:length(pks(:,1))
         maxv = 15; %%%%%%%%%%% /!\ ARBITRARY CONST %%%%%%%%%%%
         
         for vdir = -1:2:1 % direction vertical (+1 monte, -1 descend)
-            % disp('Initialisation x, y')
+            %disp('Initialisation x, y')
             x = J;
-            y = I;
+            y = I + double(vdir>0);
 
             % VERTICAL
             ENDV = 0;
@@ -193,7 +193,7 @@ for i = 1:length(pks(:,1))
                 if isequal(mnew(y,x),0)
                     [xout, yout, bool] = lookleft(x, y, mnew);
                     if bool
-                        % disp('Funky left')
+                        %disp('Funky left')
                         x = xout;
                         y = yout;
                         ENDH = 1;
@@ -266,14 +266,19 @@ for i = 1:length(pks(:,1))
         [yy,ind] = sort(yi);
         xx = smooth(yi,xi,0.3,'rloess'); 
         figure(2), subplot(133)
-        plot(xi,yi,colors{rem(j,6)+1}), xlim([0 78]), ylim([0 101]), hold on
-        plot(xx(ind),yy,'r-','LineWidth',2)
+%          plot(xi,yi,colors{rem(j,6)+1}), xlim([0 78]), ylim([0 101]), hold on
+%          plot(xx(ind),yy,'r*'), xlim([0 78]), ylim([0 101]), hold on
         
 %         [xx100, yy100] = checkco(round(xx(ind)*100), round(yy*100), out);
 %         out(sub2ind(size(out),yy100,xx100)) = 1;
         fit = createFitLin(xi,yi);
         pocs{j}.crease = sign(fit.p1);
         %plot(fit)
+        
+        % Interpolation
+        yq = 10:max(yy);
+        xq = interp1(yy,xx(ind),yq);
+        plot(xq,yq), xlim([0 78]), ylim([0 101]), hold on
     end
     hold off
 
