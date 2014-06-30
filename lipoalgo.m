@@ -154,12 +154,8 @@ for i = 1:length(pks(:,1))
 
     % Edges detector - get pieces of curve from matrix
     seg{i} = mat2pocs(m);
-end
-% possibilité de fusionner les deux for (suppr line up line down)
-for i = 1:size(seg,1)
-    disp(i)
+
     for j = 1:size(seg{i},2)
-        disp(j)
         [seg{i}{j}.xi, seg{i}{j}.yi] = readpocs(seg{i}{j}.data);
 
         % Normal
@@ -168,7 +164,6 @@ for i = 1:size(seg,1)
         % Reverse
         [seg{i}{j}.yy, seg{i}{j}.ind] = sort(seg{i}{j}.yi);
         seg{i}{j}.xx = smooth(seg{i}{j}.yi,seg{i}{j}.xi,0.3,'rloess'); 
-
 
     %         [xx100, yy100] = checkco(round(xx(ind)*100), round(yy*100), out);
     %         out(sub2ind(size(out),yy100,xx100)) = 1;
@@ -186,11 +181,10 @@ for i = 1:size(seg,1)
     end
 end
     
-%%
+%% plot a mettre en forme
 
     figure(1)
     xlim([co2time(tinf)-3 co2time(tsup)+3])
-    
     
     % Plot
     figure(2)
@@ -199,8 +193,6 @@ end
 
         colors = {'.y','.g','.b','.m','.c','.k'};
 %     out = zeros(size(m)*100);
-    
-
     
 %         figure(2), subplot(133)
 %         plot(xi,yi,colors{rem(j,6)+1}), xlim([0 78]),ylim([0 101]), hold on
@@ -234,12 +226,6 @@ end
 %     hold off
 % 
 %     figure(3), plotmat(out)
-
-
-
-
-
-
 
 
 
