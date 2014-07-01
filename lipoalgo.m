@@ -189,7 +189,7 @@ for i = 1:length(pks(:,1))
     end
     
     % Make measurments on Pi signal
-    value = 50;
+    value = 50; %%%%%%% CONST %%%%%%%
     piseq = getpisignal(seg{i},value);
     if ~isequal(piseq,0)
         msr = computemeasurments(piseq,value);
@@ -204,6 +204,9 @@ for i = 1:length(pks(:,1))
     subplot(131), plotmat(T(trange),F(frange),log(Sreca)); title('Raw')
     subplot(132), plotmat(m); title('The matrix to treat')
     subplot(133), plotseg(seg{i},0,1,0,0)
+    
+    figure(3)
+    plot(msr), hold on, xlim([30 52]), ylim([400 1000])
     
     % Press key to continue
     a = 1;
