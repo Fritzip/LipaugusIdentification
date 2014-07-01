@@ -158,12 +158,12 @@ for i = 1:length(pks(:,1))
     for j = 1:size(seg{i},2)
         [seg{i}{j}.xi, seg{i}{j}.yi] = readpocs(seg{i}{j}.data);
 
-        % Normal
+        % Normal Smoothing
 %         seg{i}{j}.yy = smooth(seg{i}{j}.xi, seg{i}{j}.yi, 0.3, 'rloess'); 
 %         seg{i}{j}.xs = seg{i}{j}.xi;
 %         seg{i}{j}.ys = seg{i}{j}.yy;
         
-        % Reverse
+        % Reverse Smoothing
         [seg{i}{j}.yy, seg{i}{j}.ind] = sort(seg{i}{j}.yi);
         seg{i}{j}.xx = smooth(seg{i}{j}.yi,seg{i}{j}.xi,0.3,'rloess'); 
         seg{i}{j}.xs = seg{i}{j}.xx(seg{i}{j}.ind);
@@ -180,9 +180,20 @@ for i = 1:length(pks(:,1))
         seg{i}{j}.yb = xyb(2);
 
         % Interpolation
-        seg{i}{j}.yq = 10:max(seg{i}{j}.yy);
+        seg{i}{j}.yq = min(seg{i}{j}.yy):max(seg{i}{j}.yy);
         seg{i}{j}.xq = interp1(seg{i}{j}.yy, seg{i}{j}.xx(seg{i}{j}.ind),seg{i}{j}.yq);
     end
+    
+    % Rearrange
+    [seg{i}, vali] = permutesegitem(seg{i},50);
+    if ~isempty(seg{i})
+        
+    end
+    
+    % identifier première montée
+    
+    % mesures sur première montée
+    
     
     % Center the current signal
     figure(1)
@@ -201,19 +212,10 @@ for i = 1:length(pks(:,1))
     end
 end
     
-%% plot a mettre en forme
-
-    
-    
-    
-
+%%
         
 %     out = zeros(size(m)*100);
-    
-%         figure(2), subplot(133)
-%         plot(xi,yi,colors{rem(j,6)+1}), xlim([0 78]),ylim([0 101]), hold on
-%         plot(xi,yy,'r-','LineWidth',2)
-        
+
     %         [xx100, yy100] = checkco(round(xx(ind)*100), round(yy*100), out);
     %         out(sub2ind(size(out),yy100,xx100)) = 1;
 
