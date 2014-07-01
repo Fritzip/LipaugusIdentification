@@ -1,6 +1,6 @@
-function [seg, tabout] = permutesegitem(seg, value)
+function piseq = getpisignal(seg, value)
     tab = [];
-    tabout = 0;
+    piseq = 0;
     if ~isempty(seg)
         for i = 1:length(seg)
             ind = find(seg{i}.yq==value, 1, 'first');
@@ -16,7 +16,11 @@ function [seg, tabout] = permutesegitem(seg, value)
         if ~isempty(rowi)
             tab = tab([rowi+1:size(tab,1) 1:rowi],:);
         end
-        tabout = tab(1,2);
-        seg = seg(:,tab(:,1)');
+        for i = 1:length(seg)
+            if ~isequal(tab(i,2),0) && isequal(seg{tab(i,1)}.crease,1) && tab(i,2)<35 %%%%%% CONST %%%%%%
+                piseq = seg{tab(i,1)};
+                return
+            end
+        end
     end
 end
