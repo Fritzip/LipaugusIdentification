@@ -1,7 +1,7 @@
-function plotseg(seg,raw,extrap,smooth,bary)
+function plotseg(seg,raw,interpo,smooth,bary)
     colors = {'.y','.g','.b','.m','.c','.k'};
     for i = 1:length(seg)
-        if extrap
+        if interpo
             plot(seg{i}.xq, seg{i}.yq, colors{rem(i+1,6)+1}), hold on
         end
         if raw

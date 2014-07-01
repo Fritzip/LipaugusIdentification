@@ -189,10 +189,10 @@ for i = 1:length(pks(:,1))
     end
     
     % Make measurments on Pi signal
-    piseq = getpisignal(seg{i},50);
+    value = 50;
+    piseq = getpisignal(seg{i},value);
     if ~isequal(piseq,0)
-        disp('yeey')
-        msr = computemeasurments(piseq)
+        msr = computemeasurments(piseq,value);
     end
     
     % Center the current signal
