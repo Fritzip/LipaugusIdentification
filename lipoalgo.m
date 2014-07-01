@@ -159,17 +159,21 @@ for i = 1:length(pks(:,1))
         [seg{i}{j}.xi, seg{i}{j}.yi] = readpocs(seg{i}{j}.data);
 
         % Normal
-    %         yy = smooth(xi,yi,0.3,'rloess'); 
-
+%         seg{i}{j}.yy = smooth(seg{i}{j}.xi, seg{i}{j}.yi, 0.3, 'rloess'); 
+%         seg{i}{j}.xs = seg{i}{j}.xi;
+%         seg{i}{j}.ys = seg{i}{j}.yy;
+        
         % Reverse
         [seg{i}{j}.yy, seg{i}{j}.ind] = sort(seg{i}{j}.yi);
         seg{i}{j}.xx = smooth(seg{i}{j}.yi,seg{i}{j}.xi,0.3,'rloess'); 
-
-    %         [xx100, yy100] = checkco(round(xx(ind)*100), round(yy*100), out);
-    %         out(sub2ind(size(out),yy100,xx100)) = 1;
+        seg{i}{j}.xs = seg{i}{j}.xx(seg{i}{j}.ind);
+        seg{i}{j}.ys = seg{i}{j}.yy;
+        
+        % Lineare Fitting
         fit = createFitLin(seg{i}{j}.xi, seg{i}{j}.yi);
         seg{i}{j}.crease = sign(fit.p1);
 
+        % Barycentre
         sortpoc = sortrows(seg{i}{j}.data,1);
         xyb = sortpoc(round(size(seg{i}{j}.data,1)/2),:);
         seg{i}{j}.xb = xyb(1);
@@ -179,10 +183,8 @@ for i = 1:length(pks(:,1))
         seg{i}{j}.yq = 10:max(seg{i}{j}.yy);
         seg{i}{j}.xq = interp1(seg{i}{j}.yy, seg{i}{j}.xx(seg{i}{j}.ind),seg{i}{j}.yq);
     end
-end
     
-%% plot a mettre en forme
-
+    % Center the current signal
     figure(1)
     xlim([co2time(tinf)-3 co2time(tsup)+3])
     
@@ -190,23 +192,30 @@ end
     figure(2)
     subplot(131), plotmat(T(trange),F(frange),log(Sreca)); title('Raw')
     subplot(132), plotmat(m); title('The matrix to treat')
+    subplot(133), plotseg(seg{i},0,1,1,1)
+    
+    % Press key to continue
+    a = 1;
+    while a
+        a = ~waitforbuttonpress;
+    end
+end
+    
+%% plot a mettre en forme
 
-        colors = {'.y','.g','.b','.m','.c','.k'};
+    
+    
+    
+
+        
 %     out = zeros(size(m)*100);
     
 %         figure(2), subplot(133)
 %         plot(xi,yi,colors{rem(j,6)+1}), xlim([0 78]),ylim([0 101]), hold on
 %         plot(xi,yy,'r-','LineWidth',2)
         
-        figure(2), subplot(133)
-%          plot(xi,yi,colors{rem(j,6)+1}), xlim([0 78]), ylim([0 101]), hold on
-%          plot(xx(ind),yy,'r*'), xlim([0 78]), ylim([0 101]), hold on
-        
-            %plot(fit)
-    plot(seg{j}.xb, seg{j}.yb, '*r'), hold on
-        plot(seg{j}.xq, seg{j}.yq), xlim([0 78]), ylim([0 101]), hold on
-        
-    hold off
+    %         [xx100, yy100] = checkco(round(xx(ind)*100), round(yy*100), out);
+    %         out(sub2ind(size(out),yy100,xx100)) = 1;
 
     
 %     seuil = [10 20 30 50 60 70];
@@ -229,8 +238,3 @@ end
 
 
 
-    % Press key to continue
-    a = 1;
-    while a
-        a = ~waitforbuttonpress;
-    end
