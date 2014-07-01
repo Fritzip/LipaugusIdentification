@@ -179,21 +179,21 @@ for i = 1:length(pks(:,1))
         seg{i}{j}.xb = xyb(1);
         seg{i}{j}.yb = xyb(2);
 
-        % Interpolation
-        seg{i}{j}.yq = min(seg{i}{j}.yy):max(seg{i}{j}.yy);
-        seg{i}{j}.xq = interp1(seg{i}{j}.yy, seg{i}{j}.xx(seg{i}{j}.ind),seg{i}{j}.yq);
-    end
-    
-    % Rearrange
-    [seg{i}, vali] = permutesegitem(seg{i},50);
-    if ~isempty(seg{i})
+        % Raw Interpolation
+        seg{i}{j}.yq = min(seg{i}{j}.yi):max(seg{i}{j}.yi);
+        seg{i}{j}.xq = interp1(seg{i}{j}.yi, seg{i}{j}.xi, seg{i}{j}.yq);
         
+        % Smooth Interpolation
+%         seg{i}{j}.yq = min(seg{i}{j}.yy):max(seg{i}{j}.yy);
+%         seg{i}{j}.xq = interp1(seg{i}{j}.yy, seg{i}{j}.xx(seg{i}{j}.ind),seg{i}{j}.yq);
     end
     
-    % identifier première montée
-    
-    % mesures sur première montée
-    
+    % Make measurments on Pi signal
+    piseq = getpisignal(seg{i},50);
+    if ~isequal(piseq,0)
+        disp('yeey')
+        msr = computemeasurments(piseq)
+    end
     
     % Center the current signal
     figure(1)
@@ -203,7 +203,7 @@ for i = 1:length(pks(:,1))
     figure(2)
     subplot(131), plotmat(T(trange),F(frange),log(Sreca)); title('Raw')
     subplot(132), plotmat(m); title('The matrix to treat')
-    subplot(133), plotseg(seg{i},0,1,1,1)
+    subplot(133), plotseg(seg{i},0,1,0,0)
     
     % Press key to continue
     a = 1;
