@@ -196,7 +196,7 @@ for i = 1:length(pks(:,1))
     piseq = getpisignal(seg{i},value);
     
     areasum = computeareasum(piseq,value);
-    if length(areasum)>6
+    if length(areasum) > 6 && max(areasum) > 400 %%%%%%%% CONST %%%%%%%%
         fitresults = createFitFourier2(areasum);
         measures = [measures; i fitresults.a0 fitresults.a1 fitresults.b1...
                     fitresults.a2 fitresults.b2 fitresults.w...
@@ -229,8 +229,7 @@ for i = 1:length(pks(:,1))
     end
 end
     
-% y = A*(1-exp(-t/tau))
-% 	
+csvwrite('measures.csv',measures)
 
 %%
         
