@@ -8,7 +8,7 @@ global fs nfft ovlp T F
 
 % Read .wav file
 %[x, fs] = audioread('lipo.WAV');
-[x, fs] = audioread('120319_095_mono3.wav',[round(2400*44100) round(2600*44100)]);
+[x, fs] = audioread('120119_071_mono3.wav',[round(2600*44100) round(2800*44100)]);
 
 % Stereo to mono
 x = stereo2mono(x);
@@ -125,13 +125,14 @@ toc
 %%%%%%%%%%%%%%%%%%%%%%%
 
 seg = cell(length(pks(:,1)),1);
+measures = [];
 
 for i = 1:length(pks(:,1))
     disp(i)
     
     % Get position (time) of calls
-    val = pks(i,1);
-    [tinf, tsup] = findtco(val, shftw, size(Safn,2)); %%%%%%%%%%% /!\ ARBITRARY CONST IN FUNCTION %%%%%%%%%%%
+    callstart = pks(i,1);
+    [tinf, tsup] = findtco(callstart, shftw, size(Safn,2)); %%%%%%%%%%% /!\ ARBITRARY CONST IN FUNCTION %%%%%%%%%%%
     
     trange = tinf:tsup;
     frange = freq2co(LOWR):freq2co(HIGHR);
@@ -148,6 +149,8 @@ for i = 1:length(pks(:,1))
     % Apply BWareaopen (matlab function)
     m = rmnoisepts(BWs,35); %%%%%%%%%%% /!\ ARBITRARY CONST %%%%%%%%%%% taille minimale bloc en pixels
 
+    %m = m(45:101,1:35);
+    
     %%%%%%%%%%%%%%%%%%%%%%%
     % Measurments
     %%%%%%%%%%%%%%%%%%%%%%%
@@ -189,32 +192,46 @@ for i = 1:length(pks(:,1))
     end
     
     % Make measurments on Pi signal
-    value = 50; %%%%%%% CONST %%%%%%%
+    value = 15; %%%%%%% CONST %%%%%%%
     piseq = getpisignal(seg{i},value);
-    if ~isequal(piseq,0)
-        msr = computemeasurments(piseq,value);
+    
+    areasum = computeareasum(piseq,value);
+    if length(areasum)>6
+        fitresults = createFitFourier2(areasum);
+        measures = [measures; i fitresults.a0 fitresults.a1 fitresults.b1...
+                    fitresults.a2 fitresults.b2 fitresults.w...
+                    max(areasum) length(areasum)];
     end
     
-    % Center the current signal
-    figure(1)
-    xlim([co2time(tinf)-3 co2time(tsup)+3])
-    
-    % Plot
-    figure(2)
-    subplot(131), plotmat(T(trange),F(frange),log(Sreca)); title('Raw')
-    subplot(132), plotmat(m); title('The matrix to treat')
-    subplot(133), plotseg(seg{i},0,1,0,0)
-    
-    figure(3)
-    plot(msr), hold on, xlim([30 52]), ylim([400 1000])
-    
-    % Press key to continue
-    a = 1;
-    while a
-        a = ~waitforbuttonpress;
+    PLOT = 0;
+    if PLOT
+        % Center the current signal
+        figure(1)
+        xlim([co2time(tinf)-3 co2time(tsup)+3])
+
+        % Plot
+        figure(2)
+        subplot(131), plotmat(T(trange),F(frange),log(Sreca)); title('Raw')
+        subplot(132), plotmat(m); title('The matrix to treat')
+        subplot(133), plotseg(seg{i},0,1,0,0)
+
+        figure(3)
+        plot(areasum,'-r'), hold on, %xlim([30 52]), ylim([400 1000])
+
+        % Press key to continue
+        a = 1;
+        while a
+            a = ~waitforbuttonpress;
+        end
+
+        figure(3)
+        plot(areasum,'b'), hold on, %xlim([30 52]), ylim([400 1000])
     end
 end
     
+% y = A*(1-exp(-t/tau))
+% 	
+
 %%
         
 %     out = zeros(size(m)*100);
