@@ -8,7 +8,7 @@ global fs nfft ovlp T F
 
 % Read .wav file
 %[x, fs] = audioread('lipo.WAV');
-[x, fs] = audioread('120119_071_mono3.wav',[round(2600*44100) round(2800*44100)]);
+[x, fs] = audioread('120119_071_mono3.wav',[round(2600*44100) round(2630*44100)]);
 
 % Stereo to mono
 x = stereo2mono(x);
@@ -103,7 +103,7 @@ figure(1)
 plotmat(T,F,log(Sa)), hold on
 
 for i = 1:size(pks,1)
-    dec = 30;
+    dec = 30; % en Hz
     if isequal(mod(i,2),0)
         color = 'b';
         dec = -dec;
@@ -116,12 +116,16 @@ for i = 1:size(pks,1)
             'LineStyle','--',...
             'EdgeColor',color)
     hold on
+    text(co2time(pks(i,1))+0.6,5700,[num2str(i)],...
+	'VerticalAlignment','middle',...
+	'HorizontalAlignment','center',...
+	'FontSize',14)
 end
 hold off
 toc
 
 %%%%%%%%%%%%%%%%%%%%%%%
-% Treatment 
+%% Treatment 
 %%%%%%%%%%%%%%%%%%%%%%%
 
 seg = cell(length(pks(:,1)),1);
@@ -149,12 +153,10 @@ for i = 1:length(pks(:,1))
     % Apply BWareaopen (matlab function)
     m = rmnoisepts(BWs,35); %%%%%%%%%%% /!\ ARBITRARY CONST %%%%%%%%%%% taille minimale bloc en pixels
 
-    m1 = m(:,1:40);
-    m2 = m(:,35:55);
-    m3 = m(:,45:size(m,2));
-    %m = m(45:101,1:35);
-    
-    
+%     m1 = m(:,1:40);
+%     m2 = m(:,35:55);
+%     m3 = m(:,45:size(m,2));
+
     %%%%%%%%%%%%%%%%%%%%%%%
     % Measurments
     %%%%%%%%%%%%%%%%%%%%%%%
@@ -207,7 +209,7 @@ for i = 1:length(pks(:,1))
                     max(areasum) length(areasum) sum(Sreca(:)) increasesize(areasum,size(m,1)-value)];
     end
     
-    PLOT = 0;
+    PLOT = 1;
     if PLOT
         % Center the current signal
         figure(1)
@@ -222,10 +224,10 @@ for i = 1:length(pks(:,1))
         figure(3)
         plot(areasum,'-r'), hold on, %xlim([30 52]), ylim([400 1000])
 
-        figure(5),
-        subplot(131), plotmat(m1)
-        subplot(132), plotmat(m2)
-        subplot(133), plotmat(m3)
+%         figure(5),
+%         subplot(131), plotmat(m1)
+%         subplot(132), plotmat(m2)
+%         subplot(133), plotmat(m3)
     
         % Press key to continue
         a = 1;
