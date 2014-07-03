@@ -4,11 +4,11 @@
 tic, clear, clc, close all
 lipoalgopaths;
 
-global fs nfft ovlp T F
+global fs nfft ovlp T F Fint
 
 % Read .wav file
 %[x, fs] = audioread('lipo.WAV');
-[x, fs] = audioread('120119_071_mono3.wav',[round(2600*44100) round(2630*44100)]);
+[x, fs] = audioread('120119_071_mono3.wav',[round(2600*44100) round(2700*44100)]);
 
 % Stereo to mono
 x = stereo2mono(x);
@@ -45,15 +45,15 @@ xbp = bandpass(x,LOW,HIGH);
 [S, F, T, ~] = dospectro(xbp,ovlp);
 
 % Keep only interesting part
-S = S(freq2co(LOW):freq2co(HIGH),:);
-F = F(freq2co(LOW):freq2co(HIGH));
+Sint = S(freq2co(LOW):freq2co(HIGH),:);
+Fint = F(freq2co(LOW):freq2co(HIGH));
 
 % Denoise signal
 %Sdn = denoise(S,-20);
 %Sdna = abs(Sdn);
 
 % Prepare image
-Sa = abs(S);
+Sa = abs(Sint);
 im = mat2gray(Sa)*255;
 
 % Fuzzy Filter
@@ -65,14 +65,14 @@ f = @(x) min(x(:));
 
 %%%%%%%%%%% /!\ CONSTANTES ARBITRAIRES MAIS DÉPENDANTES DES C.I. %%%%%%%%%%%
 %%%%%%%%%%% (en pixel ~ carré de 2*20)
-Safn = nlfilter(Saf,[freq2co(1800) time2co(0.04)],f); 
+Safn = nlfilter(Saf,[freq2co(850) time2co(0.04)],f); 
 
 % % Plot Spectro 
-% plotmat(T,F,log(Sa));
+% plotmat(T,Fint,log(Sa));
 % % Plot Fuzzy Spectro
-% plotmat(T,F,log(Saf));
+% plotmat(T,Fint,log(Saf));
 % % Plot Fuzzy Neigborhooded Spectro
-% plotmat(T,F,log(Safn));
+% plotmat(T,Fint,log(Safn));
 
 toc
 %%%%%%%%%%%%%%%%%%%%%%%
@@ -86,21 +86,23 @@ shftw = time2co(1.2); % Pi + Hau average lengths %%%%%% CONST %%%%%%
 pas = 1; % en pixel
 sumit = zeros(ceil((size(Safn,2)-shftw)/pas),1);
 for i = pas:pas:(size(Safn,2)-shftw)
-    sumit(i/pas) = sum(sum(abs(Safn(freq2co(LOWR):freq2co(HIGHR),i:i+shftw))));
+    Srecafn = Safn(freq2coint(LOWR):freq2coint(HIGHR),i:i+shftw);
+    sumit(i/pas) = sum(Srecafn(:));
 end
+sumit = sumit/max(sumit);
 
 % Peak detection
-delta = 20;         %%%%%%%%%%% /!\ ARBITRARY CONST %%%%%%%%%%%
+delta = 0.005;         %%%%%%%%%%% /!\ ARBITRARY CONST %%%%%%%%%%%
 % delta correspond à la sensibilité de la détection. Plus delta diminu,
 % plus on obtient de pks (peaks), et inversement. On peut alors ce servir
-% de se paramètre pour être plus ou moins sensible. 
+% de ce paramètre pour être plus ou moins sensible. 
 [pks, ~] = peakdet(sumit, delta, 1:length(sumit));
 
 %figure(1), plot(sumit), hold on, plot(pks(:,1),pks(:,2),'*r'), hold off
 
 % Plot spectro and rectangles
 figure(1)
-plotmat(T,F,log(Sa)), hold on
+plotmat(T,Fint,log(Sa)), hold on
 
 for i = 1:size(pks,1)
     dec = 30; % en Hz
@@ -116,7 +118,7 @@ for i = 1:size(pks,1)
             'LineStyle','--',...
             'EdgeColor',color)
     hold on
-    text(co2time(pks(i,1))+0.6,5700,[num2str(i)],...
+    text(co2time(pks(i,1))+0.6,5800,num2str(i),...
 	'VerticalAlignment','middle',...
 	'HorizontalAlignment','center',...
 	'FontSize',14)
@@ -139,7 +141,7 @@ for i = 1:length(pks(:,1))
     [tinf, tsup] = findtco(callstart, shftw, size(Safn,2)); %%%%%%%%%%% /!\ ARBITRARY CONST IN FUNCTION %%%%%%%%%%%
     
     trange = tinf:tsup;
-    frange = freq2co(LOWR):freq2co(HIGHR);
+    frange = freq2coint(LOWR):freq2coint(HIGHR);
     
     % Reduce mat to the studied call
     Sreca = Sa(frange, trange);
@@ -151,7 +153,7 @@ for i = 1:length(pks(:,1))
     BWs = [BWsa, BWsaf];
     
     % Apply BWareaopen (matlab function)
-    m = rmnoisepts(BWs,35); %%%%%%%%%%% /!\ ARBITRARY CONST %%%%%%%%%%% taille minimale bloc en pixels
+    m = rmnoisepts(BWs,freq2co(220)*time2co(0.1)); %%%%%%%%%%% /!\ ARBITRARY CONST %%%%%%%%%%% taille minimale bloc en pixels 6*6
 
 %     m1 = m(:,1:40);
 %     m2 = m(:,35:55);
@@ -198,7 +200,7 @@ for i = 1:length(pks(:,1))
     end
     
     % Make measurments on Pi signal
-    value = 15; %%%%%%% CONST %%%%%%%
+    value = freq2coint(1600); %%%%%%% CONST %%%%%%%
     piseq = getpisignal(seg{i},value);
     
     areasum = computeareasum(piseq,value);
@@ -217,13 +219,13 @@ for i = 1:length(pks(:,1))
 
         % Plot
         figure(2)
-        subplot(131), plotmat(T(trange),F(frange),log(Sreca)); title('Raw')
-        subplot(132), plotmat(m); title('The matrix to treat')
+        subplot(131), plotmat(T(trange),Fint(frange),log(Sreca)); title('Raw')
+        subplot(132), plotmat(T(trange),Fint(frange), m); title('The matrix to treat')
         subplot(133), plotseg(seg{i},0,1,0,0)
 
         figure(3)
         plot(areasum,'-r'), hold on, %xlim([30 52]), ylim([400 1000])
-
+        
 %         figure(5),
 %         subplot(131), plotmat(m1)
 %         subplot(132), plotmat(m2)
