@@ -149,7 +149,11 @@ for i = 1:length(pks(:,1))
     % Apply BWareaopen (matlab function)
     m = rmnoisepts(BWs,35); %%%%%%%%%%% /!\ ARBITRARY CONST %%%%%%%%%%% taille minimale bloc en pixels
 
+    m1 = m(:,1:40);
+    m2 = m(:,35:55);
+    m3 = m(:,45:size(m,2));
     %m = m(45:101,1:35);
+    
     
     %%%%%%%%%%%%%%%%%%%%%%%
     % Measurments
@@ -200,7 +204,7 @@ for i = 1:length(pks(:,1))
         fitresults = createFitFourier2(areasum);
         measures = [measures; i fitresults.a0 fitresults.a1 fitresults.b1...
                     fitresults.a2 fitresults.b2 fitresults.w...
-                    max(areasum) length(areasum)];
+                    max(areasum) length(areasum) sum(Sreca(:)) increasesize(areasum,size(m,1)-value)];
     end
     
     PLOT = 0;
@@ -218,6 +222,11 @@ for i = 1:length(pks(:,1))
         figure(3)
         plot(areasum,'-r'), hold on, %xlim([30 52]), ylim([400 1000])
 
+        figure(5),
+        subplot(131), plotmat(m1)
+        subplot(132), plotmat(m2)
+        subplot(133), plotmat(m3)
+    
         % Press key to continue
         a = 1;
         while a
@@ -228,7 +237,7 @@ for i = 1:length(pks(:,1))
         plot(areasum,'b'), hold on, %xlim([30 52]), ylim([400 1000])
     end
 end
-    
+hold off
 csvwrite('measures.csv',measures)
 
 %%
