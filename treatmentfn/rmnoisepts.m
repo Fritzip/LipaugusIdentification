@@ -25,10 +25,10 @@ function BW = rmnoisepts(BWs,minpixgrp)
     mask = drawlineinmat(mask, round(size(mask,2)*54/76), 1, round(size(mask,2)*49/76), round(size(mask,1)*53/110));
     
     % Horizontal criquet
-    mask = drawlineinmat(mask, 1, round(size(mask,1)*39/110), size(mask,2), round(size(mask,1)*39/110));
-    mask = drawlineinmat(mask, 1, round(size(mask,1)*47/110), size(mask,2), round(size(mask,1)*47/110));
-    mask = drawlineinmat(mask, 1, round(size(mask,1)*43/110), size(mask,2), round(size(mask,1)*43/110));
-    
+%     mask = drawlineinmat(mask, 1, round(size(mask,1)*39/110), size(mask,2), round(size(mask,1)*39/110));
+%     mask = drawlineinmat(mask, 1, round(size(mask,1)*47/110), size(mask,2), round(size(mask,1)*47/110));
+%     mask = drawlineinmat(mask, 1, round(size(mask,1)*43/110), size(mask,2), round(size(mask,1)*43/110));
+%     
     % 
     BW = mergeBWs(BWs,minpixgrp,mask);
 end
