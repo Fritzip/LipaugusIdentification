@@ -14,8 +14,8 @@ function pocs = mat2pocs(m)
         poc = [];
         
         % Tolérance au décalage horizontale / verticale
-        maxh = 5;  %%%%%%%%%%% /!\ ARBITRARY CONST %%%%%%%%%%%
-        maxv = 15; %%%%%%%%%%% /!\ ARBITRARY CONST %%%%%%%%%%%
+        maxh = time2co(0.09);  %%%%%%%%%%% /!\ ARBITRARY CONST %%%%%%%%%%% 0.05 - 0.12
+        maxv = freq2co(625); %%%%%%%%%%% /!\ ARBITRARY CONST %%%%%%%%%%%
         
         for vdir = -1:2:1 % direction vertical (+1 monte, -1 descend)
             %disp('Initialisation x, y')
@@ -84,7 +84,7 @@ function pocs = mat2pocs(m)
             end
         end
         % Enregistre la portion de courbe si + de 15 px
-        if size(poc, 1) > 15  %%%%%%%%%%% /!\ ARBITRARY CONST %%%%%%%%%%%
+        if size(poc, 1) > freq2co(625)  %%%%%%%%%%% /!\ ARBITRARY CONST %%%%%%%%%%%
             pocs{end+1} = struct('data', poc);
         end
     end
