@@ -8,7 +8,7 @@ global fs nfft ovlp T F Fint
 
 % Read .wav file
 %[x, fs] = audioread('lipo.WAV');
-[x, fs] = audioread('120119_071_mono3.wav',[round(2600*44100) round(2700*44100)]);
+[x, fs] = audioread('120119_071_mono3.wav',[round(2600*44100) round(2800*44100)]);
 
 % Stereo to mono
 x = stereo2mono(x);
@@ -127,7 +127,7 @@ hold off
 toc
 
 %%%%%%%%%%%%%%%%%%%%%%%
-%% Treatment 
+% Treatment 
 %%%%%%%%%%%%%%%%%%%%%%%
 
 seg = cell(length(pks(:,1)),1);
@@ -204,18 +204,20 @@ for i = 1:length(pks(:,1))
     piseq = getpisignal(seg{i},value);
     
     areasum = computeareasum(piseq,value);
-    if length(areasum) > 6 && max(areasum) > 400 %%%%%%%% CONST %%%%%%%%
+    if length(areasum) > 6 %%%%%%%% CONST %%%%%%%%
         fitresults = createFitFourier2(areasum);
         measures = [measures; i fitresults.a0 fitresults.a1 fitresults.b1...
                     fitresults.a2 fitresults.b2 fitresults.w...
                     max(areasum) length(areasum) sum(Sreca(:)) increasesize(areasum,size(m,1)-value)];
+    else
+        measures = [measures; i 0 0 0 0 0 0 max(areasum) length(areasum) sum(Sreca(:)) increasesize(areasum,size(m,1)-value)];
     end
     
-    PLOT = 1;
+    PLOT = 0;
     if PLOT
         % Center the current signal
         figure(1)
-        xlim([co2time(tinf)-3 co2time(tsup)+3])
+        xlim([co2time(tinf)-1 co2time(tsup)+1])
 
         % Plot
         figure(2)
@@ -228,7 +230,7 @@ for i = 1:length(pks(:,1))
         
 %         figure(5),
 %         subplot(131), plotmat(m1)
-%         subplot(132), plotmat(m2)
+%         subplot(132), plotmat(m2) 
 %         subplot(133), plotmat(m3)
     
         % Press key to continue
@@ -243,6 +245,12 @@ for i = 1:length(pks(:,1))
 end
 hold off
 csvwrite('measures.csv',measures)
+%%
+idx = kmeans(measures,9,'distance','city');
+[silh3,h] = silhouette(measures,idx,'city');
+set(get(gca,'Children'),'FaceColor',[.8 .8 1])
+xlabel('Silhouette Value')
+ylabel('Cluster')
 
 %%
         
