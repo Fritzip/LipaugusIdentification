@@ -12,3 +12,4 @@ addpath([[pwd '/'] 'peaks']);
 addpath([[pwd '/'] 'curvefit']);
 addpath([[pwd '/'] 'treatmentfn']);
 addpath([[pwd '/'] 'measurmentsfn']);
+addpath([[pwd '/'] 'OptiPath']);

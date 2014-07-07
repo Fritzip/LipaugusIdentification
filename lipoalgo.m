@@ -246,7 +246,7 @@ end
 hold off
 csvwrite('measures.csv',measures)
 %%
-idx = kmeans(measures,9,'distance','city');
+idx = kmeans(measures,18,'distance','city');
 [silh3,h] = silhouette(measures,idx,'city');
 set(get(gca,'Children'),'FaceColor',[.8 .8 1])
 xlabel('Silhouette Value')
