@@ -1,14 +1,18 @@
+%function measures = lipoalgo(x, fs_, cut)
+
 %%%%%%%%%%%%%%%%%%%%%%%
 %% Initalization
 %%%%%%%%%%%%%%%%%%%%%%%
 tic, clear, clc, close all
 lipoalgopaths;
 
-global fs nfft ovlp T F Fint
+global fs nfft ovlp T F Fint Tint
 
 % Read .wav file
+cut = 2600;
 %[x, fs] = audioread('lipo.WAV');
-[x, fs] = audioread('120119_071_mono3.wav',[round(2600*44100) round(2800*44100)]);
+[x, fs] = audioread('120119_071_mono3.wav',[round(cut*44100) round((cut+200)*44100)]);
+%fs = fs_;
 
 % Stereo to mono
 x = stereo2mono(x);
@@ -47,6 +51,7 @@ xbp = bandpass(x,LOW,HIGH);
 % Keep only interesting part
 Sint = S(freq2co(LOW):freq2co(HIGH),:);
 Fint = F(freq2co(LOW):freq2co(HIGH));
+Tint = T + cut;
 
 % Denoise signal
 %Sdn = denoise(S,-20);
@@ -102,28 +107,28 @@ delta = 0.005;         %%%%%%%%%%% /!\ ARBITRARY CONST %%%%%%%%%%%
 
 % Plot spectro and rectangles
 figure(1)
-plotmat(T,Fint,log(Sa)), hold on
+plotmat(Tint,Fint,log(Sa)), hold on
 
-for i = 1:size(pks,1)
-    dec = 30; % en Hz
-    if isequal(mod(i,2),0)
-        color = 'b';
-        dec = -dec;
-    else
-        color = 'k';
-    end
-    rectangle('Position',[co2time(pks(i,1))-0.15,1100+dec,1.6,4500],...
-            'Curvature',[0.4,0.8],...
-            'LineWidth',2,...
-            'LineStyle','--',...
-            'EdgeColor',color)
-    hold on
-    text(co2time(pks(i,1))+0.6,5800,num2str(i),...
-	'VerticalAlignment','middle',...
-	'HorizontalAlignment','center',...
-	'FontSize',14)
-end
-hold off
+% for i = 1:size(pks,1)
+%     dec = 30; % en Hz
+%     if isequal(mod(i,2),0)
+%         color = 'b';
+%         dec = -dec;
+%     else
+%         color = 'k';
+%     end
+%     rectangle('Position',[co2time(pks(i,1))-0.15,1100+dec,1.6,4500],...
+%             'Curvature',[0.4,0.8],...
+%             'LineWidth',2,...
+%             'LineStyle','--',...
+%             'EdgeColor',color)
+%     hold on
+%     text(co2time(pks(i,1))+0.6,5800,num2str(i),...
+% 	'VerticalAlignment','middle',...
+% 	'HorizontalAlignment','center',...
+% 	'FontSize',14)
+% end
+% hold off
 toc
 
 %%%%%%%%%%%%%%%%%%%%%%%
@@ -204,25 +209,61 @@ for i = 1:length(pks(:,1))
     piseq = getpisignal(seg{i},value);
     
     areasum = computeareasum(piseq,value);
-    if length(areasum) > 6 %%%%%%%% CONST %%%%%%%%
+    
+    if length(areasum) > 6 && max(areasum) > 400 %%%%%%%% CONST %%%%%%%%
+        
+        figure(1)
+        xlim([co2timeint(tinf)-1 co2timeint(tsup)+1])
+        
+        dec = 30; % en Hz
+        if isequal(mod(i,2),0)
+            color = 'b';
+            dec = -dec;
+        else
+            color = 'k';
+        end
+        rectangle('Position',[co2timeint(pks(i,1))-0.15,1100+dec,1.6,4500],...
+                'Curvature',[0.4,0.8],...
+                'LineWidth',2,...
+                'LineStyle','--',...
+                'EdgeColor',color)
+        hold on
+        text(co2timeint(pks(i,1))+0.6,5800,num2str(i),...
+        'VerticalAlignment','middle',...
+        'HorizontalAlignment','center',...
+        'FontSize',14)
+    
+        prompt = {'Identification of Lipaugus :'};
+        dlg_title = 'Input';
+        num_lines = 1;
+        %def = {'20'};
+        id = inputdlg(prompt,dlg_title,num_lines);
+        if isempty(id)
+            break
+        end
+
         fitresults = createFitFourier2(areasum);
-        measures = [measures; i fitresults.a0 fitresults.a1 fitresults.b1...
+        measures = [measures; {fitresults.a0 fitresults.a1 fitresults.b1...
                     fitresults.a2 fitresults.b2 fitresults.w...
-                    max(areasum) length(areasum) sum(Sreca(:)) increasesize(areasum,size(m,1)-value)];
-    else
-        measures = [measures; i 0 0 0 0 0 0 max(areasum) length(areasum) sum(Sreca(:)) increasesize(areasum,size(m,1)-value)];
+                    max(areasum) length(areasum) sum(Sreca(:)) id}];% increasesize(areasum,size(m,1)-value)];
+%     else
+%         measures = [measures; i 0 0 0 0 0 0 max(areasum) length(areasum) sum(Sreca(:)) increasesize(areasum,size(m,1)-value)];
+
+    
     end
+    
+    hold off 
     
     PLOT = 0;
     if PLOT
         % Center the current signal
         figure(1)
-        xlim([co2time(tinf)-1 co2time(tsup)+1])
+        xlim([co2timeint(tinf)-1 co2timeint(tsup)+1])
 
         % Plot
         figure(2)
-        subplot(131), plotmat(T(trange),Fint(frange),log(Sreca)); title('Raw')
-        subplot(132), plotmat(T(trange),Fint(frange), m); title('The matrix to treat')
+        subplot(131), plotmat(Tint(trange),Fint(frange),log(Sreca)); title('Raw')
+        subplot(132), plotmat(Tint(trange),Fint(frange), m); title('The matrix to treat')
         subplot(133), plotseg(seg{i},0,1,0,0)
 
         figure(3)
@@ -232,7 +273,7 @@ for i = 1:length(pks(:,1))
 %         subplot(131), plotmat(m1)
 %         subplot(132), plotmat(m2) 
 %         subplot(133), plotmat(m3)
-    
+     
         % Press key to continue
         a = 1;
         while a
@@ -244,13 +285,14 @@ for i = 1:length(pks(:,1))
     end
 end
 hold off
-csvwrite('measures.csv',measures)
+
+%end
 %%
-idx = kmeans(measures,18,'distance','city');
-[silh3,h] = silhouette(measures,idx,'city');
-set(get(gca,'Children'),'FaceColor',[.8 .8 1])
-xlabel('Silhouette Value')
-ylabel('Cluster')
+% idx = kmeans(measures,18,'distance','city');
+% [silh3,h] = silhouette(measures,idx,'city');
+% set(get(gca,'Children'),'FaceColor',[.8 .8 1])
+% xlabel('Silhouette Value')
+% ylabel('Cluster')
 
 %%
         
