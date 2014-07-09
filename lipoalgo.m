@@ -1,18 +1,18 @@
-%function measures = lipoalgo(x, fs_, cut)
+function measures = lipoalgo(x, fs_, cut, k)
 
 %%%%%%%%%%%%%%%%%%%%%%%
 %% Initalization
 %%%%%%%%%%%%%%%%%%%%%%%
-tic, clear, clc, close all
-lipoalgopaths;
+tic, %clear, clc, close all
+%lipoalgopaths;
 
 global fs nfft ovlp T F Fint Tint
 
 % Read .wav file
-cut = 2600;
+%cut = 2600;
 %[x, fs] = audioread('lipo.WAV');
-[x, fs] = audioread('120119_071_mono3.wav',[round(cut*44100) round((cut+200)*44100)]);
-%fs = fs_;
+%[x, fs] = audioread('120119_071_mono3.wav',[round(cut*44100) round((cut+200)*44100)]);
+fs = fs_;
 
 % Stereo to mono
 x = stereo2mono(x);
@@ -106,7 +106,7 @@ delta = 0.005;         %%%%%%%%%%% /!\ ARBITRARY CONST %%%%%%%%%%%
 %figure(1), plot(sumit), hold on, plot(pks(:,1),pks(:,2),'*r'), hold off
 
 % Plot spectro and rectangles
-figure(1)
+figure(k)
 plotmat(Tint,Fint,log(Sa)), hold on
 
 % for i = 1:size(pks,1)
@@ -137,6 +137,12 @@ toc
 
 seg = cell(length(pks(:,1)),1);
 measures = [];
+ni = 1;
+truth = {{'a' 'b' 'c' 'd' 'd' 'c' 'a' 'c' 'd' 'e' 'f' 'd' 'g' 'b' 'h' 'g' 'b'}... 
+{'h' 'g' 'd' 'c' 'c' 'b' 'd' 'g' 'b' 'c' 'g' 'b' 'h' 'd' 'b' 'd' 'e'}...
+{'c' 'Y' 'b' 'd' 'e' 'd' 'b' 'd' 'b' 'd' 'b' 'g' 'f' 'd' 'b' 'e' 'f' 'd' 'g' 'd' 'e' 'b' 'j' 'b' 'g'}...
+{'a' 'c' 'j' 'b' 'a' 'g' 'j' 'b' 'e' 'd' 'j' 'b' 'g' 'a' 'j' 'b' 'e' 'b' 'j' 'a' 'b' 'j' 'g' 'a'}...
+{'g' 'j' 'a' 'b' 'a' 'g' 'j' 'g' 'd' 'b' 'j' 'c' 'g' 'a' 'b' 'e' 'X' 'j' 'g' 'a' 'c' 'e' 'j' 'd' 'b'}};
 
 for i = 1:length(pks(:,1))
     disp(i)
@@ -212,7 +218,7 @@ for i = 1:length(pks(:,1))
     
     if length(areasum) > 6 && max(areasum) > 400 %%%%%%%% CONST %%%%%%%%
         
-        figure(1)
+        figure(k)
         xlim([co2timeint(tinf)-1 co2timeint(tsup)+1])
         
         dec = 30; % en Hz
@@ -228,28 +234,21 @@ for i = 1:length(pks(:,1))
                 'LineStyle','--',...
                 'EdgeColor',color)
         hold on
-        text(co2timeint(pks(i,1))+0.6,5800,num2str(i),...
+        text(co2timeint(pks(i,1))+0.6,5800,truth{k}{ni},...
         'VerticalAlignment','middle',...
         'HorizontalAlignment','center',...
         'FontSize',14)
-    
-        prompt = {'Identification of Lipaugus :'};
-        dlg_title = 'Input';
-        num_lines = 1;
-        %def = {'20'};
-        id = inputdlg(prompt,dlg_title,num_lines);
-        if isempty(id)
-            break
-        end
-
+        
         fitresults = createFitFourier2(areasum);
-        measures = [measures; {fitresults.a0 fitresults.a1 fitresults.b1...
+        measures = [measures; {tinf truth{k}{ni}} fitresults.a0 fitresults.a1 fitresults.b1...
                     fitresults.a2 fitresults.b2 fitresults.w...
-                    max(areasum) length(areasum) sum(Sreca(:)) id}];% increasesize(areasum,size(m,1)-value)];
+                    max(areasum) length(areasum) sum(Sreca(:))];% increasesize(areasum,size(m,1)-value)];
+                
+        ni = ni+1;
+        
 %     else
 %         measures = [measures; i 0 0 0 0 0 0 max(areasum) length(areasum) sum(Sreca(:)) increasesize(areasum,size(m,1)-value)];
-
-    
+%         pks(i,:) = []; % on supprime la ligne d'un potentiel lipaugus non exploitable
     end
     
     hold off 
@@ -286,7 +285,25 @@ for i = 1:length(pks(:,1))
 end
 hold off
 
-%end
+% for i = 1:length(pks(:,1))
+%     % Get position (time) of calls
+%     callstart = pks(i,1);
+%     [tinf, tsup] = findtco(callstart, shftw, size(Safn,2)); %%%%%%%%%%% /!\ ARBITRARY CONST IN FUNCTION %%%%%%%%%%%
+%     
+%     trange = tinf:tsup;
+%     frange = freq2coint(LOWR):freq2coint(HIGHR);
+% 
+%     prompt = {'Identification of Lipaugus :'};
+%     dlg_title = 'Input';
+%     num_lines = 1;
+%     %def = {'20'};
+%     id = inputdlg(prompt,dlg_title,num_lines);
+%     if isempty(id)
+%         break
+%     end
+% end
+
+end
 %%
 % idx = kmeans(measures,18,'distance','city');
 % [silh3,h] = silhouette(measures,idx,'city');
