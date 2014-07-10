@@ -157,7 +157,7 @@ for i = 1:length(pks(:,1))
     % Reduce mat to the studied call
     Sreca = Sa(frange, trange);
     Srecaf = Saf(frange, trange);
-
+    
     % Find the edges (denoise)
     BWsa = findedges(Sreca);
     BWsaf = findedges(Srecaf);
@@ -240,10 +240,10 @@ for i = 1:length(pks(:,1))
         'FontSize',14)
         
         fitresults = createFitFourier2(areasum);
-        measures = [measures; {tinf truth{k}{ni}} fitresults.a0 fitresults.a1 fitresults.b1...
+        measures = [measures; tinf double(uint8(truth{k}{ni})) fitresults.a0 fitresults.a1 fitresults.b1...
                     fitresults.a2 fitresults.b2 fitresults.w...
-                    max(areasum) length(areasum) sum(Sreca(:))];% increasesize(areasum,size(m,1)-value)];
-                
+                    max(areasum) length(areasum) sum(Sreca(:)) increasesize(areasum,size(m,1)-value)];
+        
         ni = ni+1;
         
 %     else
@@ -336,6 +336,5 @@ end
 %     hold off
 % 
 %     figure(3), plotmat(out)
-
 
 

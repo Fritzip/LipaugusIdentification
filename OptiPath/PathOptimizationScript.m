@@ -16,7 +16,7 @@ sizeX = 50;
 sizeY = 25;
 numWayPoints = 50;
 rng(50);
-
+    
 W_x = makeWindFun(sizeX,sizeY);
 W_y = makeWindFun(sizeX,sizeY);
 
