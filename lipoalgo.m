@@ -1,18 +1,18 @@
-function measures = lipoalgo(x, fs_, cut, k)
+%function measures = lipoalgo(x, fs_, cut, k)
 
 %%%%%%%%%%%%%%%%%%%%%%%
 %% Initalization
 %%%%%%%%%%%%%%%%%%%%%%%
-tic, %clear, clc, close all
-%lipoalgopaths;
+tic, clear, clc, close all
+lipoalgopaths;
 
 global fs nfft ovlp T F Fint Tint
 
 % Read .wav file
-%cut = 2600;
-%[x, fs] = audioread('lipo.WAV');
-%[x, fs] = audioread('120119_071_mono3.wav',[round(cut*44100) round((cut+200)*44100)]);
-fs = fs_;
+cut = 2600;
+k = 1;
+[x, fs] = audioread('120119_071_mono3.wav',[round(cut*44100) round((cut+200)*44100)]);
+%fs = fs_;
 
 % Stereo to mono
 x = stereo2mono(x);
@@ -238,22 +238,23 @@ for i = 1:length(pks(:,1))
         'VerticalAlignment','middle',...
         'HorizontalAlignment','center',...
         'FontSize',14)
-        
+    
         fitresults = createFitFourier2(areasum);
         measures = [measures; tinf double(uint8(truth{k}{ni})) fitresults.a0 fitresults.a1 fitresults.b1...
                     fitresults.a2 fitresults.b2 fitresults.w...
                     max(areasum) length(areasum) sum(Sreca(:)) increasesize(areasum,size(m,1)-value)];
-        
+
         ni = ni+1;
-        
+
 %     else
 %         measures = [measures; i 0 0 0 0 0 0 max(areasum) length(areasum) sum(Sreca(:)) increasesize(areasum,size(m,1)-value)];
 %         pks(i,:) = []; % on supprime la ligne d'un potentiel lipaugus non exploitable
+
     end
     
     hold off 
     
-    PLOT = 0;
+    PLOT = 1;
     if PLOT
         % Center the current signal
         figure(1)
@@ -303,7 +304,7 @@ hold off
 %     end
 % end
 
-end
+%end
 %%
 % idx = kmeans(measures,18,'distance','city');
 % [silh3,h] = silhouette(measures,idx,'city');

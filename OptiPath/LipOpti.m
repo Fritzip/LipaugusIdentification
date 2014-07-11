@@ -27,8 +27,8 @@ AirSpeed = 500;
 numWayPoints = sizeX;
 rng(50);
 
-W_x = log(m);
-W_y = zeros(size(m));
+W_x = log(m)-mean(log(m(:)));
+W_y = W_x.*3;
 
 [Xgrid,Ygrid] = meshgrid(1:sizeX,1:sizeY);
 hq = quiver(Xgrid,Ygrid,W_x,W_y,'k');
