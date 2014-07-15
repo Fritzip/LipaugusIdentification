@@ -17,7 +17,7 @@ end
     
 %end
 %%
-fileID = fopen('measures.dat','w');
+fileID = fopen('measures2.dat','w');
 formatSpec = ['%d %s' repmat(' %f', [1,size(measures,2)-2]) '\n'];
 [nrows,ncols] = size(measures);
 for row = 1:nrows
