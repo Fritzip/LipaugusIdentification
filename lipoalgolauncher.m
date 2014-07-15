@@ -6,28 +6,24 @@ info = audioinfo(filename);
 step = 100;
 cut = 2600;
 measures = [];
-%try
     %while cut*info.SampleRate < info.TotalSamples
-for i = 1:5
+for i = 1:5 % »»»»» à augmenter «««««
     x = audioread(filename,[(cut-step)*info.SampleRate cut*info.SampleRate]);
     measures = [measures; lipoalgo(x,info.SampleRate, cut, i)];
     cut = cut + step;
 end
-%catch
+
     
 %end
 %%
-fileID = fopen('measures2.dat','w');
+fileID = fopen('.\output\measures2.dat','w');
 formatSpec = ['%d %s' repmat(' %f', [1,size(measures,2)-2]) '\n'];
 [nrows,ncols] = size(measures);
 for row = 1:nrows
     fprintf(fileID,formatSpec,measures(row,1),char(measures(row,2)), measures(row,3:end));
 end
 fclose(fileID);
-
-%csvwrite('measures.csv',measures)
 %%
-disp('yipa')
 csvwrite('measures.csv',measures(:,3:end))
 figure(6)
 D = pdist(cell2mat(measures(:,3:end)));

@@ -13,3 +13,4 @@ addpath([[pwd '/'] 'curvefit']);
 addpath([[pwd '/'] 'treatmentfn']);
 addpath([[pwd '/'] 'measurmentsfn']);
 addpath([[pwd '/'] 'OptiPath']);
+addpath([[pwd '/'] 'template-input']);

@@ -143,9 +143,8 @@ truth = {{'a' 'b' 'c' 'd' 'd' 'c' 'a' 'c' 'd' 'e' 'f' 'd' 'g' 'b' 'h' 'g' 'b'}..
 {'c' 'Y' 'b' 'd' 'e' 'd' 'b' 'd' 'b' 'd' 'b' 'g' 'f' 'd' 'b' 'e' 'f' 'd' 'g' 'd' 'e' 'b' 'j' 'b' 'g'}...
 {'a' 'c' 'j' 'b' 'a' 'g' 'j' 'b' 'e' 'd' 'j' 'b' 'g' 'a' 'j' 'b' 'e' 'b' 'j' 'a' 'b' 'j' 'g' 'a'}...
 {'g' 'j' 'a' 'b' 'a' 'g' 'j' 'g' 'd' 'b' 'j' 'c' 'g' 'a' 'b' 'e' 'X' 'j' 'g' 'a' 'c' 'e' 'j' 'd' 'b'}};
-temp = load('mastertemplate.mat');
-temp = temp.m;
-template = double(rgb2gray(imread('C:\Users\Bernadette\Desktop\Maxime\Lipaugus\Output\thetemplate4.png')));
+
+template = double(rgb2gray(imread('thetemplate4.png')));
 template = flipdim(template,1);
 template = imresize(template,[101,78]); %%%%% CONST %%%%%%
 
