@@ -6,8 +6,10 @@ function [tinf, tsup] = findtco(val, shftw, my)
     tsup = val+shftw;
     if tinf < 1
         tinf = 1;
+        tsup = tinf+shftw+time2co(0.15);
     end
     if tsup > my
         tsup = my;
+        tinf = tsup-shftw-time2co(0.15);
     end
 end
