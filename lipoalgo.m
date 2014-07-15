@@ -1,18 +1,18 @@
-%function measures = lipoalgo(x, fs_, cut, k)
+function measures = lipoalgo(x, fs_, cut, k)
 
 %%%%%%%%%%%%%%%%%%%%%%%
 %% Initalization
 %%%%%%%%%%%%%%%%%%%%%%%
-tic, clear, clc, close all
-lipoalgopaths;
+tic, %clear, clc, close all
+%lipoalgopaths;
 
 global fs nfft ovlp T F Fint Tint
 
 % Read .wav file
-cut = 2600;
-k = 1;
-[x, fs] = audioread('120119_071_mono3.wav',[round(cut*44100) round((cut+200)*44100)]);
-%fs = fs_;
+%cut = 2600;
+%k = 1;
+%[x, fs] = audioread('120119_071_mono3.wav',[round(cut*44100) round((cut+200)*44100)]);
+fs = fs_;
 
 % Stereo to mono
 x = stereo2mono(x);
@@ -143,13 +143,17 @@ truth = {{'a' 'b' 'c' 'd' 'd' 'c' 'a' 'c' 'd' 'e' 'f' 'd' 'g' 'b' 'h' 'g' 'b'}..
 {'c' 'Y' 'b' 'd' 'e' 'd' 'b' 'd' 'b' 'd' 'b' 'g' 'f' 'd' 'b' 'e' 'f' 'd' 'g' 'd' 'e' 'b' 'j' 'b' 'g'}...
 {'a' 'c' 'j' 'b' 'a' 'g' 'j' 'b' 'e' 'd' 'j' 'b' 'g' 'a' 'j' 'b' 'e' 'b' 'j' 'a' 'b' 'j' 'g' 'a'}...
 {'g' 'j' 'a' 'b' 'a' 'g' 'j' 'g' 'd' 'b' 'j' 'c' 'g' 'a' 'b' 'e' 'X' 'j' 'g' 'a' 'c' 'e' 'j' 'd' 'b'}};
+temp = load('mastertemplate.mat');
+temp = temp.m;
+template = double(rgb2gray(imread('C:\Users\Bernadette\Desktop\Maxime\Lipaugus\Output\thetemplate4.png')));
+template = flipdim(template,1);
+template = imresize(template,[101,78]); %%%%% CONST %%%%%%
 
 for i = 1:length(pks(:,1))
     disp(i)
     
     % Get position (time) of calls
-    callstart = pks(i,1);
-    [tinf, tsup] = findtco(callstart, shftw, size(Safn,2)); %%%%%%%%%%% /!\ ARBITRARY CONST IN FUNCTION %%%%%%%%%%%
+    [tinf, tsup] = findtco(pks(i,1), shftw, size(Safn,2)); %%%%%%%%%%% /!\ ARBITRARY CONST IN FUNCTION %%%%%%%%%%%
     
     trange = tinf:tsup;
     frange = freq2coint(LOWR):freq2coint(HIGHR);
@@ -158,6 +162,15 @@ for i = 1:length(pks(:,1))
     Sreca = Sa(frange, trange);
     Srecaf = Saf(frange, trange);
     
+    new = template.*(log(Sreca)+abs(min(log(Sreca(:)))));
+    new = new+abs(min(new(:)));
+    newdn = (new>0.65*max(new(:))).*new; %%%%% CONST %%%%%%
+    [x1,y1,w1] = mat3vec(newdn(:,1:round((35/78)*size(Sreca,2))));
+    [x2,y2,w2] = mat3vec(newdn(:,round((36/78)*size(Sreca,2)):size(Sreca,2)));
+    [smoothfit1, ~] = createFitSmooth2(x1, y1, w1, 0.00002); %%%%% CONST %%%%%%
+    [smoothfit2, ~] = createFitSmooth2(x2, y2, w2, 0.00002); %%%%% CONST %%%%%%
+    
+    %figure(4), plot(sum(new))
     % Find the edges (denoise)
     BWsa = findedges(Sreca);
     BWsaf = findedges(Srecaf);
@@ -165,7 +178,10 @@ for i = 1:length(pks(:,1))
     
     % Apply BWareaopen (matlab function)
     m = rmnoisepts(BWs,freq2co(220)*time2co(0.1)); %%%%%%%%%%% /!\ ARBITRARY CONST %%%%%%%%%%% taille minimale bloc en pixels 6*6
-
+    %m = m.*template;
+    figure(5)
+    subplot(121), plotmat(m)
+    subplot(122), plotmat(m.*template)
 %     m1 = m(:,1:40);
 %     m2 = m(:,35:55);
 %     m3 = m(:,45:size(m,2));
@@ -191,7 +207,7 @@ for i = 1:length(pks(:,1))
         seg{i}{j}.xs = seg{i}{j}.xx(seg{i}{j}.ind);
         seg{i}{j}.ys = seg{i}{j}.yy;
         
-        % Lineare Fitting
+        % Linear Fitting
         fit = createFitLin(seg{i}{j}.xi, seg{i}{j}.yi);
         seg{i}{j}.crease = sign(fit.p1);
 
@@ -215,6 +231,8 @@ for i = 1:length(pks(:,1))
     piseq = getpisignal(seg{i},value);
     
     areasum = computeareasum(piseq,value);
+    %areasumpi = computeareasum2(smoothfit1(1:0.1:30));
+    %areasumhau = computeareasum2(smoothfit2(1:0.1:40));
     
     if length(areasum) > 6 && max(areasum) > 400 %%%%%%%% CONST %%%%%%%%
         
@@ -238,12 +256,22 @@ for i = 1:length(pks(:,1))
         'VerticalAlignment','middle',...
         'HorizontalAlignment','center',...
         'FontSize',14)
-    
+
+        au = (smoothfit1(1:0.1:30)-20).*((smoothfit1(1:0.1:30)-20)>0);
+        ie = (smoothfit2(1:0.1:40)-20).*((smoothfit2(1:0.1:40)-20)>0);
+        
         fitresults = createFitFourier2(areasum);
         measures = [measures; tinf double(uint8(truth{k}{ni})) fitresults.a0 fitresults.a1 fitresults.b1...
                     fitresults.a2 fitresults.b2 fitresults.w...
-                    max(areasum) length(areasum) sum(Sreca(:)) increasesize(areasum,size(m,1)-value)];
+                    max(areasum) length(areasum) sum(Sreca(:)) increasesize(areasum,size(m,1)-value) au' ie'];
 
+
+        
+%         measures = [measures; tinf double(uint8(truth{k}{ni})) ];
+            
+            %max(areasum) length(areasum) sum(Sreca(:))];  
+                
+                
         ni = ni+1;
 
 %     else
@@ -262,9 +290,13 @@ for i = 1:length(pks(:,1))
 
         % Plot
         figure(2)
-        subplot(131), plotmat(Tint(trange),Fint(frange),log(Sreca)); title('Raw')
-        subplot(132), plotmat(Tint(trange),Fint(frange), m); title('The matrix to treat')
-        subplot(133), plotseg(seg{i},0,1,0,0)
+        subplot(131), plotmat(log(Sreca)); title('Raw') %Tint(trange),Fint(frange),
+        hold on
+        plot(6:35, smoothfit1(6:35).*((smoothfit1(6:35)-20)>0),'b', 'LineWidth',2)
+        plot(39:75, smoothfit2(3:75-39+3).*((smoothfit2(3:75-39+3)-20)>0),'b', 'LineWidth',2)
+        hold off
+        subplot(132), plotmat(Tint(trange),Fint(frange), m); title('The matrix to treat') % plotmat(new)
+        subplot(133), plotmat(newdn) %plotseg(seg{i},0,1,0,0)
 
         figure(3)
         plot(areasum,'-r'), hold on, %xlim([30 52]), ylim([400 1000])
@@ -304,7 +336,7 @@ hold off
 %     end
 % end
 
-%end
+end
 %%
 % idx = kmeans(measures,18,'distance','city');
 % [silh3,h] = silhouette(measures,idx,'city');
