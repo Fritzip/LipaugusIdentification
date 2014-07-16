@@ -1,5 +1,7 @@
 function [pocs, mout] = mat2pocs(m)
 % Edges detector - get pieces of curve from matrix
+% mat2pocs = from matrix to pieces of curve
+%--------------------------------------------------------------------------
     mask = ones(size(m));
     mout = zeros(size(m));
     mnew = m;
@@ -16,8 +18,8 @@ function [pocs, mout] = mat2pocs(m)
         mint = zeros(size(m));
         
         % Tolérance au décalage horizontale / verticale
-        maxh = time2co(0.1);  %%%%%%%%%%% /!\ ARBITRARY CONST %%%%%%%%%%% 0.05 - 0.12
-        maxv = freq2co(200); %%%%%%%%%%% /!\ ARBITRARY CONST %%%%%%%%%%%
+        maxh = time2co(0.1);  %%%%%%%%%%% /!\ ARBITRARY CONST %%%%%%%%%%% recommended value [0.05 - 0.12]
+        maxv = freq2co(200);  %%%%%%%%%%% /!\ ARBITRARY CONST %%%%%%%%%%% recommended value [100 - 700]
         
         for vdir = -1:2:1 % direction vertical (+1 monte, -1 descend)
             %disp('Initialisation x, y')

@@ -29,8 +29,12 @@ L = linkage(D,'average');
 dendrogram(L,0,'labels',measures(:,2));
 c = cophenet(L,D)
 
-
-
+%% Kmeans
+idx = kmeans(measures,18,'distance','city');
+[silh3,h] = silhouette(measures,idx,'city');
+set(get(gca,'Children'),'FaceColor',[.8 .8 1])
+xlabel('Silhouette Value')
+ylabel('Cluster')
 
 
 

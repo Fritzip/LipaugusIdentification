@@ -6,7 +6,7 @@ function [fitresult, gof] = createFitSmooth2(x, y, w, smooth, outliers)
 %  Output:
 %      fitresult : a fit object representing the fit.
 %      gof : structure with goodness-of fit info.
-
+%--------------------------------------------------------------------------
 [xData, yData, weights] = prepareCurveData( x, y, w );
 
 % Set up fittype and options.

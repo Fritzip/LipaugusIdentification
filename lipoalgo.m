@@ -75,9 +75,9 @@ Safn = nlfilter(Saf,[freq2co(850) time2co(0.04)],f);
 % % Plot Spectro 
 % plotmat(T,Fint,log(Sa));
 % % Plot Fuzzy Spectro
-% plotmat(T,Fint,log(Saf));
+% figure, plotmat(T,Fint,log(Saf));
 % % Plot Fuzzy Neigborhooded Spectro
-% plotmat(T,Fint,log(Safn));
+% figure, plotmat(T,Fint,log(Safn));
 
 toc
 %%%%%%%%%%%%%%%%%%%%%%%
@@ -99,7 +99,7 @@ sumit = sumit/max(sumit);
 % Peak detection
 delta = 0.005;         %%%%%%%%%%% /!\ ARBITRARY CONST %%%%%%%%%%%
 % delta correspond à la sensibilité de la détection. Plus delta diminu,
-% plus on obtient de pks (peaks), et inversement. On peut alors ce servir
+% plus on obtient de pks (peaks), et inversement. On peut alors se servir
 % de ce paramètre pour être plus ou moins sensible. 
 [pks, ~] = peakdet(sumit, delta, 1:length(sumit));
 
@@ -144,7 +144,7 @@ truth = {{'a' 'b' 'c' 'd' 'd' 'c' 'a' 'c' 'd' 'e' 'f' 'd' 'g' 'b' 'h' 'g' 'b'}..
 {'a' 'c' 'j' 'b' 'a' 'g' 'j' 'b' 'e' 'd' 'j' 'b' 'g' 'a' 'j' 'b' 'e' 'b' 'j' 'a' 'b' 'j' 'g' 'a'}...
 {'g' 'j' 'a' 'b' 'a' 'g' 'j' 'g' 'd' 'b' 'j' 'c' 'g' 'a' 'b' 'e' 'X' 'j' 'g' 'a' 'c' 'e' 'j' 'd' 'b'}};
 
-template = double(rgb2gray(imread('thetemplate4.png')));
+template = double(rgb2gray(imread('thetemplate5.png')));
 template = flipdim(template,1);
 template = imresize(template,[101,78]); %%%%% CONST %%%%%%
 
@@ -164,41 +164,62 @@ for i = 1:length(pks(:,1))
     new = template.*(Sreca);%+abs(min(log(Sreca(:)))));
     %new = new+abs(min(new(:)));
     %newdn = (new>0.05*max(new(:))).*new; %%%%% CONST %%%%%%
-
     
     % Find the edges (denoise)
     BWsa = findedges(Sreca);
     BWsaf = findedges(Srecaf);
     BWs = [BWsa, BWsaf];
     
-    % Apply BWareaopen (matlab function)
-    m = rmnoisepts(BWs,freq2co(220)*time2co(0.1)); %%%%%%%%%%% /!\ ARBITRARY CONST %%%%%%%%%%% taille minimale bloc en pixels 6*6
+    % Merge each edges matrix
+    %m = rmnoisepts(BWs,freq2co(220)*time2co(0.1)); %%%%%%%%%%% /!\ ARBITRARY CONST %%%%%%%%%%% taille minimale bloc en pixels 6*6
+    m = mergeBWs(BWs);
     
     figure(5)
     subplot(131), plotmat(m)
     m = m.*template;
     m(m<0.1*max(m(:))) = 0;
+    % Apply BWareaopen (matlab function)
+    m = m.*bwareaopen(m>0, freq2co(220)*time2co(0.1)); %%%%%%%%%%% /!\ ARBITRARY CONST %%%%%%%%%%%
     subplot(132), plotmat(m)
-
+    
+    
     %%%%%%%%%%%%%%%%%%%%%%%
     % Measurments
     %%%%%%%%%%%%%%%%%%%%%%%
 
     % Edges detector - get pieces of curve from matrix
     [seg{i}, mout] = mat2pocs(m);
-    [I, J] = ind2sub(size(mout),find(mout>0));
+    mout1 = mout(:,1:round((36/78)*size(Sreca,2)));
+    mout2 = mout(:,round((36/78)*size(Sreca,2)):size(Sreca,2));
+    [X1, Y1, W1] = mat3vecv2(mout1);
+    [X2, Y2, W2] = mat3vecv2(mout2);
     
     subplot(133), plotmat(mout)
     hold on
-    [x1,y1,w1] = mat3vec(mout(:,1:round((35/78)*size(Sreca,2))));
-    [x2,y2,w2] = mat3vec(mout(:,round((36/78)*size(Sreca,2)):size(Sreca,2)));
-    [smoothfit1, ~] = createFitSmooth2(x1, y1, w1, 0.0045); %%%%% CONST %%%%%%
-    [smoothfit2, ~] = createFitSmooth2(x2, y2, w2, 0.0045); %%%%% CONST %%%%%%
     
-    plot(6:35, smoothfit1(6:35).*((smoothfit1(6:35)-20)>0), 'r', 'LineWidth',2)
-    plot(39:75, smoothfit2(3:75-39+3).*((smoothfit2(3:75-39+3)-20)>0), 'r', 'LineWidth',2)
-    hold off
-        
+    %%%%%%%%% En fonction !!!
+    try
+        [smoothfit1, ~] = createFitSmooth2(X1, Y1, W1, 0.006, []); %%%%% CONST %%%%%%
+
+        fdata = feval(smoothfit1,X1);
+        indices = abs(fdata - Y1) > 3;%1.5*std(I);
+        outliers = excludedata(X1,Y1,'indices',indices);
+        smoothfit12 = createFitSmooth2(X1,Y1,W1,0.006,outliers);
+
+        [smoothfit2, ~] = createFitSmooth2(X2, Y2, W2, 0.02, []); %%%%% CONST %%%%%%
+
+        fdata = feval(smoothfit2,X2);
+        indices = abs(fdata - Y2) > 3;%1.5*std(I);
+        outliers = excludedata(X2,Y2,'indices',indices);
+        smoothfit22 = createFitSmooth2(X2,Y2,W2,0.02,outliers);
+
+        plot(3:36, smoothfit12(3:36).*(smoothfit12(3:36)>0), 'r', 'LineWidth',2)
+        plot(36+2:75, smoothfit22(2:75-36).*(smoothfit22(2:75-36)>0), 'r', 'LineWidth',2)
+        hold off
+    catch err
+        disp('Nous maîtrisons la situation !')
+    end
+    
     for j = 1:size(seg{i},2)
         [seg{i}{j}.xi, seg{i}{j}.yi] = readpocs(seg{i}{j}.data);
 
@@ -263,27 +284,17 @@ for i = 1:length(pks(:,1))
         'HorizontalAlignment','center',...
         'FontSize',14)
 
-        au = (smoothfit1(1:0.1:30)-20).*((smoothfit1(1:0.1:30)-20)>0);
-        ie = (smoothfit2(1:0.1:40)-20).*((smoothfit2(1:0.1:40)-20)>0);
+        au = (smoothfit1(1:0.1:30)).*(smoothfit1(1:0.1:30)>0);
+        ie = (smoothfit2(1:0.1:40)).*(smoothfit2(1:0.1:40)>0);
         
         fitresults = createFitFourier2(areasum);
-        measures = [measures; tinf double(uint8(truth{k}{ni})) fitresults.a0 fitresults.a1 fitresults.b1...
+        measures = [measures; tinf double(uint8(truth{k}{ni}))...
+                    fitresults.a0 fitresults.a1 fitresults.b1...
                     fitresults.a2 fitresults.b2 fitresults.w...
-                    max(areasum) length(areasum) sum(Sreca(:)) increasesize(areasum,size(m,1)-value) au' ie'];
-
-
-        
-%         measures = [measures; tinf double(uint8(truth{k}{ni})) ];
-            
-            %max(areasum) length(areasum) sum(Sreca(:))];  
-                
+                    max(areasum) length(areasum) sum(Sreca(:))...
+                    increasesize(areasum,size(m,1)-value) au' ie'];
                 
         ni = ni+1;
-
-%     else
-%         measures = [measures; i 0 0 0 0 0 0 max(areasum) length(areasum) sum(Sreca(:)) increasesize(areasum,size(m,1)-value)];
-%         pks(i,:) = []; % on supprime la ligne d'un potentiel lipaugus non exploitable
-
     end
     
     hold off 
@@ -298,8 +309,8 @@ for i = 1:length(pks(:,1))
         figure(2)
         subplot(131), plotmat(log(Sreca)); title('Raw') %Tint(trange),Fint(frange),
         hold on
-        plot(6:35, smoothfit1(6:35).*((smoothfit1(6:35)-20)>0), 'k', 'LineWidth',2)
-        plot(39:75, smoothfit2(3:75-39+3).*((smoothfit2(3:75-39+3)-20)>0), 'k', 'LineWidth',2)
+        plot(3:36, smoothfit12(3:36).*(smoothfit12(3:36)>0), 'k', 'LineWidth',2)
+        plot(36+2:75, smoothfit22(2:75-36).*(smoothfit22(2:75-36)>0), 'k', 'LineWidth',2)
         hold off
         subplot(132), plotmat(Tint(trange),Fint(frange), m); title('The matrix to treat') % plotmat(new)
         subplot(133), plotseg(seg{i},0,1,0,0) % plotmat(newdn)
