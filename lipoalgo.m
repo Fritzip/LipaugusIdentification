@@ -1,18 +1,18 @@
-function measures = lipoalgo(x, fs_, cut, k)
+%function measures = lipoalgo(x, fs_, cut, k)
 
 %%%%%%%%%%%%%%%%%%%%%%%
 %% Initalization
 %%%%%%%%%%%%%%%%%%%%%%%
-tic, %clear, clc, close all
-%lipoalgopaths;
+tic, clear, clc, close all
+lipoalgopaths;
 
 global fs nfft ovlp T F Fint Tint
 
 % Read .wav file
-%cut = 2600;
-%k = 1;
-%[x, fs] = audioread('120119_071_mono3.wav',[round(cut*44100) round((cut+200)*44100)]);
-fs = fs_;
+cut = 2600;
+k = 1;
+[x, fs] = audioread('120119_071_mono3.wav',[round(cut*44100) round((cut+200)*44100)]);
+%fs = fs_;
 
 % Stereo to mono
 x = stereo2mono(x);
@@ -161,15 +161,11 @@ for i = 1:length(pks(:,1))
     Sreca = Sa(frange, trange);
     Srecaf = Saf(frange, trange);
     
-    new = template.*(log(Sreca)+abs(min(log(Sreca(:)))));
-    new = new+abs(min(new(:)));
-    newdn = (new>0.65*max(new(:))).*new; %%%%% CONST %%%%%%
-    [x1,y1,w1] = mat3vec(newdn(:,1:round((35/78)*size(Sreca,2))));
-    [x2,y2,w2] = mat3vec(newdn(:,round((36/78)*size(Sreca,2)):size(Sreca,2)));
-    [smoothfit1, ~] = createFitSmooth2(x1, y1, w1, 0.00002); %%%%% CONST %%%%%%
-    [smoothfit2, ~] = createFitSmooth2(x2, y2, w2, 0.00002); %%%%% CONST %%%%%%
+    new = template.*(Sreca);%+abs(min(log(Sreca(:)))));
+    %new = new+abs(min(new(:)));
+    %newdn = (new>0.05*max(new(:))).*new; %%%%% CONST %%%%%%
+
     
-    %figure(4), plot(sum(new))
     % Find the edges (denoise)
     BWsa = findedges(Sreca);
     BWsaf = findedges(Srecaf);
@@ -177,21 +173,32 @@ for i = 1:length(pks(:,1))
     
     % Apply BWareaopen (matlab function)
     m = rmnoisepts(BWs,freq2co(220)*time2co(0.1)); %%%%%%%%%%% /!\ ARBITRARY CONST %%%%%%%%%%% taille minimale bloc en pixels 6*6
-    %m = m.*template;
+    
     figure(5)
-    subplot(121), plotmat(m)
-    subplot(122), plotmat(m.*template)
-%     m1 = m(:,1:40);
-%     m2 = m(:,35:55);
-%     m3 = m(:,45:size(m,2));
+    subplot(131), plotmat(m)
+    m = m.*template;
+    m(m<0.1*max(m(:))) = 0;
+    subplot(132), plotmat(m)
 
     %%%%%%%%%%%%%%%%%%%%%%%
     % Measurments
     %%%%%%%%%%%%%%%%%%%%%%%
 
     % Edges detector - get pieces of curve from matrix
-    seg{i} = mat2pocs(m);
-
+    [seg{i}, mout] = mat2pocs(m);
+    [I, J] = ind2sub(size(mout),find(mout>0));
+    
+    subplot(133), plotmat(mout)
+    hold on
+    [x1,y1,w1] = mat3vec(mout(:,1:round((35/78)*size(Sreca,2))));
+    [x2,y2,w2] = mat3vec(mout(:,round((36/78)*size(Sreca,2)):size(Sreca,2)));
+    [smoothfit1, ~] = createFitSmooth2(x1, y1, w1, 0.0045); %%%%% CONST %%%%%%
+    [smoothfit2, ~] = createFitSmooth2(x2, y2, w2, 0.0045); %%%%% CONST %%%%%%
+    
+    plot(6:35, smoothfit1(6:35).*((smoothfit1(6:35)-20)>0), 'r', 'LineWidth',2)
+    plot(39:75, smoothfit2(3:75-39+3).*((smoothfit2(3:75-39+3)-20)>0), 'r', 'LineWidth',2)
+    hold off
+        
     for j = 1:size(seg{i},2)
         [seg{i}{j}.xi, seg{i}{j}.yi] = readpocs(seg{i}{j}.data);
 
@@ -283,7 +290,7 @@ for i = 1:length(pks(:,1))
     
     PLOT = 1;
     if PLOT
-        % Center the current signal
+        % Focus on the current signal
         figure(1)
         xlim([co2timeint(tinf)-1 co2timeint(tsup)+1])
 
@@ -291,20 +298,15 @@ for i = 1:length(pks(:,1))
         figure(2)
         subplot(131), plotmat(log(Sreca)); title('Raw') %Tint(trange),Fint(frange),
         hold on
-        plot(6:35, smoothfit1(6:35).*((smoothfit1(6:35)-20)>0),'b', 'LineWidth',2)
-        plot(39:75, smoothfit2(3:75-39+3).*((smoothfit2(3:75-39+3)-20)>0),'b', 'LineWidth',2)
+        plot(6:35, smoothfit1(6:35).*((smoothfit1(6:35)-20)>0), 'k', 'LineWidth',2)
+        plot(39:75, smoothfit2(3:75-39+3).*((smoothfit2(3:75-39+3)-20)>0), 'k', 'LineWidth',2)
         hold off
         subplot(132), plotmat(Tint(trange),Fint(frange), m); title('The matrix to treat') % plotmat(new)
-        subplot(133), plotmat(newdn) %plotseg(seg{i},0,1,0,0)
+        subplot(133), plotseg(seg{i},0,1,0,0) % plotmat(newdn)
 
         figure(3)
         plot(areasum,'-r'), hold on, %xlim([30 52]), ylim([400 1000])
-        
-%         figure(5),
-%         subplot(131), plotmat(m1)
-%         subplot(132), plotmat(m2) 
-%         subplot(133), plotmat(m3)
-     
+            
         % Press key to continue
         a = 1;
         while a
@@ -317,31 +319,7 @@ for i = 1:length(pks(:,1))
 end
 hold off
 
-% for i = 1:length(pks(:,1))
-%     % Get position (time) of calls
-%     callstart = pks(i,1);
-%     [tinf, tsup] = findtco(callstart, shftw, size(Safn,2)); %%%%%%%%%%% /!\ ARBITRARY CONST IN FUNCTION %%%%%%%%%%%
-%     
-%     trange = tinf:tsup;
-%     frange = freq2coint(LOWR):freq2coint(HIGHR);
-% 
-%     prompt = {'Identification of Lipaugus :'};
-%     dlg_title = 'Input';
-%     num_lines = 1;
-%     %def = {'20'};
-%     id = inputdlg(prompt,dlg_title,num_lines);
-%     if isempty(id)
-%         break
-%     end
-% end
-
-end
-%%
-% idx = kmeans(measures,18,'distance','city');
-% [silh3,h] = silhouette(measures,idx,'city');
-% set(get(gca,'Children'),'FaceColor',[.8 .8 1])
-% xlabel('Silhouette Value')
-% ylabel('Cluster')
+%end
 
 %%
         
