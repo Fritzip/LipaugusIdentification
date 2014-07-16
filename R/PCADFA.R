@@ -47,19 +47,3 @@ result2 <- knn(transformed[train,],transformed[-train,],Classes[train],k=1)
 table2 <- table(old=Classes[-train],new=result2)
 table2
 chisq.test(table2)
-
-
-
-
-
-
-
-
-
-tr <- sample(1:50, 25)
-train <- rbind(iris3[tr,,1], iris3[tr,,2], iris3[tr,,3])
-test <- rbind(iris3[-tr,,1], iris3[-tr,,2], iris3[-tr,,3])
-cl <- factor(c(rep("s",25), rep("c",25), rep("v",25)))
-z <- qda(train, cl)
-table(predict(z,test)$class,cl)
-
