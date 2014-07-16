@@ -13,10 +13,11 @@ function [pocs, mout] = mat2pocs(m)
 
        % New piece of curve (poc)
         poc = [];
+        mint = zeros(size(m));
         
         % Tolérance au décalage horizontale / verticale
         maxh = time2co(0.1);  %%%%%%%%%%% /!\ ARBITRARY CONST %%%%%%%%%%% 0.05 - 0.12
-        maxv = freq2co(625); %%%%%%%%%%% /!\ ARBITRARY CONST %%%%%%%%%%%
+        maxv = freq2co(200); %%%%%%%%%%% /!\ ARBITRARY CONST %%%%%%%%%%%
         
         for vdir = -1:2:1 % direction vertical (+1 monte, -1 descend)
             %disp('Initialisation x, y')
@@ -63,7 +64,7 @@ function [pocs, mout] = mat2pocs(m)
                     % Propagation average duration = 0.25 s
                     [xprop, ~] = checkco(x + time2co(0.25), y, mnew);  %%%%%%%%%%% /!\ CONST  %%%%%%%%%%%
                     mask(y, x:xprop) = 0; % update mask, remove the propagation behind the point found
-                    mout(y, x) = m(y, x);
+                    mint(y, x) = m(y, x);
                     vdec = 0;
                 elseif isequal(ENDH,0) % no junction
                     x = x - hdir*hdec;
@@ -88,6 +89,7 @@ function [pocs, mout] = mat2pocs(m)
         % Enregistre la portion de courbe si + de 15 px
         if size(poc, 1) > freq2co(625)  %%%%%%%%%%% /!\ ARBITRARY CONST %%%%%%%%%%%
             pocs{end+1} = struct('data', poc);
+            mout = mout + mint;
         end
     end
 end
