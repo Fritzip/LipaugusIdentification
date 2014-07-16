@@ -1,6 +1,7 @@
-function pocs = mat2pocs(m)
+function [pocs, mout] = mat2pocs(m)
 % Edges detector - get pieces of curve from matrix
     mask = ones(size(m));
+    mout = zeros(size(m));
     mnew = m;
     pocs = {};
     
@@ -14,7 +15,7 @@ function pocs = mat2pocs(m)
         poc = [];
         
         % Tolérance au décalage horizontale / verticale
-        maxh = time2co(0.09);  %%%%%%%%%%% /!\ ARBITRARY CONST %%%%%%%%%%% 0.05 - 0.12
+        maxh = time2co(0.1);  %%%%%%%%%%% /!\ ARBITRARY CONST %%%%%%%%%%% 0.05 - 0.12
         maxv = freq2co(625); %%%%%%%%%%% /!\ ARBITRARY CONST %%%%%%%%%%%
         
         for vdir = -1:2:1 % direction vertical (+1 monte, -1 descend)
@@ -62,6 +63,7 @@ function pocs = mat2pocs(m)
                     % Propagation average duration = 0.25 s
                     [xprop, ~] = checkco(x + time2co(0.25), y, mnew);  %%%%%%%%%%% /!\ CONST  %%%%%%%%%%%
                     mask(y, x:xprop) = 0; % update mask, remove the propagation behind the point found
+                    mout(y, x) = m(y, x);
                     vdec = 0;
                 elseif isequal(ENDH,0) % no junction
                     x = x - hdir*hdec;
