@@ -135,7 +135,10 @@ toc
 % Treatment 
 %%%%%%%%%%%%%%%%%%%%%%%
 
-seg = cell(length(pks(:,1)),1);
+segpi = cell(length(pks(:,1)),1);
+seghau1 = cell(length(pks(:,1)),1);
+seghau2 = cell(length(pks(:,1)),1);
+
 measures = [];
 ni = 1;
 truth = {{'a' 'b' 'c' 'd' 'd' 'c' 'a' 'c' 'd' 'e' 'f' 'd' 'g' 'b' 'h' 'g' 'b'}... 
@@ -144,10 +147,11 @@ truth = {{'a' 'b' 'c' 'd' 'd' 'c' 'a' 'c' 'd' 'e' 'f' 'd' 'g' 'b' 'h' 'g' 'b'}..
 {'a' 'c' 'j' 'b' 'a' 'g' 'j' 'b' 'e' 'd' 'j' 'b' 'g' 'a' 'j' 'b' 'e' 'b' 'j' 'a' 'b' 'j' 'g' 'a'}...
 {'g' 'j' 'a' 'b' 'a' 'g' 'j' 'g' 'd' 'b' 'j' 'c' 'g' 'a' 'b' 'e' 'X' 'j' 'g' 'a' 'c' 'e' 'j' 'd' 'b'}};
 
-template = double(rgb2gray(imread('thetemplate5.png')));
-template = flipdim(template,1);
-template = imresize(template,[101,78]); %%%%% CONST %%%%%%
+templatepi = readtemplate('templatepi.png', [101 78]);
+templatehau1 = readtemplate('templatehau1.png', [101 78]);
+templatehau2 = readtemplate('templatehau2.png', [101 78]);
 
+% Iterate over all segmentation results and treat the rectangle as a signal
 for i = 1:length(pks(:,1))
     disp(i)
     
@@ -161,7 +165,7 @@ for i = 1:length(pks(:,1))
     Sreca = Sa(frange, trange);
     Srecaf = Saf(frange, trange);
     
-    new = template.*(Sreca);%+abs(min(log(Sreca(:)))));
+    %new = template.*(Sreca);%+abs(min(log(Sreca(:)))));
     %new = new+abs(min(new(:)));
     %newdn = (new>0.05*max(new(:))).*new; %%%%% CONST %%%%%%
     
@@ -171,161 +175,114 @@ for i = 1:length(pks(:,1))
     BWs = [BWsa, BWsaf];
     
     % Merge each edges matrix
-    %m = rmnoisepts(BWs,freq2co(220)*time2co(0.1)); %%%%%%%%%%% /!\ ARBITRARY CONST %%%%%%%%%%% taille minimale bloc en pixels 6*6
     m = mergeBWs(BWs);
+    %m = rmnoisepts(BWs,freq2co(220)*time2co(0.1)); %%%%%%%%%%% /!\ ARBITRARY CONST %%%%%%%%%%% taille minimale bloc en pixels 6*6
     
-    figure(5)
-    subplot(131), plotmat(m)
-    m = m.*template;
-    m(m<0.1*max(m(:))) = 0;
-    % Apply BWareaopen (matlab function)
-    m = m.*bwareaopen(m>0, freq2co(220)*time2co(0.1)); %%%%%%%%%%% /!\ ARBITRARY CONST %%%%%%%%%%%
-    subplot(132), plotmat(m)
-    
+    % Separate matrix into upper and lower part
+    mpi = treatmatrix(m,templatepi); %%%%%%%%%%% /!\ ARBITRARY CONST IN FUNCTION %%%%%%%%%%%
+    mhau1 = treatmatrix(m,templatehau1);
+	mhau2 = treatmatrix(m,templatehau2);
     
     %%%%%%%%%%%%%%%%%%%%%%%
     % Measurments
     %%%%%%%%%%%%%%%%%%%%%%%
 
     % Edges detector - get pieces of curve from matrix
-    [seg{i}, mout] = mat2pocs(m);
-    mout1 = mout(:,1:round((36/78)*size(Sreca,2)));
-    mout2 = mout(:,round((36/78)*size(Sreca,2)):size(Sreca,2));
-    [X1, Y1, W1] = mat3vecv2(mout1);
-    [X2, Y2, W2] = mat3vecv2(mout2);
-    
-    subplot(133), plotmat(mout)
-    hold on
+    [segpi{i}, mpiedg] = mat2pocs(mpi);
+    [seghau1{i}, mhau1edg] = mat2pocs(mhau1);
+    [seghau2{i}, mhau2edg] = mat2pocs(mhau2);
+    figure(9), plotmat(mhau2edg)
+    % Convert parts into vectors and weights
+    [X1, Y1, W1] = mat3vec(mpiedg);
+    [X2, Y2, W2] = mat3vec(mhau2edg);
     
     %%%%%%%%% En fonction !!!
     try
-        [smoothfit1, ~] = createFitSmooth2(X1, Y1, W1, 0.006, []); %%%%% CONST %%%%%%
+        [smoothfit1, ~] = createFitSmooth2(X1, Y1, W1, 0.02, []); %%%%% CONST %%%%%%
 
         fdata = feval(smoothfit1,X1);
-        indices = abs(fdata - Y1) > 3;%1.5*std(I);
+        indices = abs(fdata - Y1) > 3;
         outliers = excludedata(X1,Y1,'indices',indices);
-        smoothfit12 = createFitSmooth2(X1,Y1,W1,0.006,outliers);
+        smoothfit12 = createFitSmooth2(X1,Y1,W1,0.02,outliers);
 
         [smoothfit2, ~] = createFitSmooth2(X2, Y2, W2, 0.02, []); %%%%% CONST %%%%%%
 
         fdata = feval(smoothfit2,X2);
-        indices = abs(fdata - Y2) > 3;%1.5*std(I);
+        indices = abs(fdata - Y2) > 3;
         outliers = excludedata(X2,Y2,'indices',indices);
         smoothfit22 = createFitSmooth2(X2,Y2,W2,0.02,outliers);
+        
+        pisign = sign(diff(smoothfit12(min(X1):max(X1))));
+        hau2sign = sign(diff(smoothfit22(min(X2):max(X2))))*-1;
+        
+        inf1 = min(X1) + find(pisign==1,1,'first') - 1;
+        sup1 = min(X1) + find(pisign==1,1,'last');
+        inf2 = min(X2) + find(hau2sign==1,1,'first') - 1;
+        sup2 = min(X2) + find(hau2sign==1,1,'last');
+        
+        
+        %%%%% Measures %%%%%%
+        msr_pi_max_x = sup1;
+        msr_pi_max_y = smoothfit12(sup1);
+        msr_hau_max_x = inf2;
+        msr_hau_max_y = smoothfit22(inf2);
+        
+        ante12 = interp1(smoothfit12(inf1:sup1),inf1:sup1,1:101);
+        ante22 = interp1(smoothfit22(inf2:sup2),inf2:sup2,1:101);
+        area = ante22-ante12;
+        
+        msr_area_10 = sum(area(10:20));
+        msr_area_20 = sum(area(20:30));
+        msr_area_30 = sum(area(30:40));
+        msr_area_40 = sum(area(40:50));
+        msr_area_50 = sum(area(50:60));
+        msr_area_60 = sum(area(60:70));
+        msr_area_70 = sum(area(70:80));
+        msr_area_80 = sum(area(80:90));
+        msr_area_90 = sum(area(90:100));
+        
+        msr_energy = sum(Sreca(:));
+        
+        piarea = msr_pi_max_x-ante12;
+        msr_picumarea = sum(piarea(20:find(ante12>0,1,'last')));
+        
+        PLOT = 1;
+        if PLOT
+            % Focus on the current signal
+            figure(k)
+            xlim([co2timeint(tinf)-1 co2timeint(tsup)+1])
 
-        plot(3:36, smoothfit12(3:36).*(smoothfit12(3:36)>0), 'r', 'LineWidth',2)
-        plot(36+2:75, smoothfit22(2:75-36).*(smoothfit22(2:75-36)>0), 'r', 'LineWidth',2)
-        hold off
+            % Plot
+            figure(2)
+            subplot(121), plotmat(log(Sreca)); title('Raw') %Tint(trange),Fint(frange),
+            hold on
+            plot(inf1:sup1, smoothfit12(inf1:sup1).*(smoothfit12(inf1:sup1)>0), 'k', 'LineWidth',2)
+            plot(inf2:sup2, smoothfit22(inf2:sup2).*(smoothfit22(inf2:sup2)>0), 'k', 'LineWidth',2)
+            hold off
+            subplot(122), plotmat(mpi+mhau1+mhau2); title('The matrix to treat') % plotmat(new) % Tint(trange),Fint(frange),
+            hold on
+            plot(inf1:sup1, smoothfit12(inf1:sup1).*(smoothfit12(inf1:sup1)>0), 'r', 'LineWidth',2)
+            plot(inf2:sup2, smoothfit22(inf2:sup2).*(smoothfit22(inf2:sup2)>0), 'r', 'LineWidth',2)
+            plot(msr_pi_max_x,msr_pi_max_y,'*r')
+            plot(msr_hau_max_x,msr_hau_max_y,'*r')
+            hold off
+            %subplot(133), plotseg(seg{i},0,1,0,0) % plotmat(newdn)
+
+            %figure(3)
+            %plot(areasum,'-r'), hold on, %xlim([30 52]), ylim([400 1000])
+
+            % Press key to continue
+            a = 1;
+            while a
+                a = ~waitforbuttonpress;
+            end
+
+            %figure(3)
+            %plot(areasum,'b'), hold on, %xlim([30 52]), ylim([400 1000])
+        end
     catch err
+        disp(err)
         disp('Nous maîtrisons la situation !')
-    end
-    
-    for j = 1:size(seg{i},2)
-        [seg{i}{j}.xi, seg{i}{j}.yi] = readpocs(seg{i}{j}.data);
-
-        % Normal Smoothing
-%         seg{i}{j}.yy = smooth(seg{i}{j}.xi, seg{i}{j}.yi, 0.3, 'rloess'); 
-%         seg{i}{j}.xs = seg{i}{j}.xi;
-%         seg{i}{j}.ys = seg{i}{j}.yy;
-        
-        % Reverse Smoothing
-        [seg{i}{j}.yy, seg{i}{j}.ind] = sort(seg{i}{j}.yi);
-        seg{i}{j}.xx = smooth(seg{i}{j}.yi,seg{i}{j}.xi,0.3,'rloess'); 
-        seg{i}{j}.xs = seg{i}{j}.xx(seg{i}{j}.ind);
-        seg{i}{j}.ys = seg{i}{j}.yy;
-        
-        % Linear Fitting
-        fit = createFitLin(seg{i}{j}.xi, seg{i}{j}.yi);
-        seg{i}{j}.crease = sign(fit.p1);
-
-        % Barycentre
-        sortpoc = sortrows(seg{i}{j}.data,1);
-        xyb = sortpoc(round(size(seg{i}{j}.data,1)/2),:);
-        seg{i}{j}.xb = xyb(1);
-        seg{i}{j}.yb = xyb(2);
-
-        % Raw Interpolation
-        seg{i}{j}.yq = min(seg{i}{j}.yi):max(seg{i}{j}.yi);
-        seg{i}{j}.xq = interp1(seg{i}{j}.yi, seg{i}{j}.xi, seg{i}{j}.yq);
-        
-        % Smooth Interpolation
-%         seg{i}{j}.yq = min(seg{i}{j}.yy):max(seg{i}{j}.yy);
-%         seg{i}{j}.xq = interp1(seg{i}{j}.yy, seg{i}{j}.xx(seg{i}{j}.ind),seg{i}{j}.yq);
-    end
-    
-    % Make measurments on Pi signal
-    value = freq2coint(1600); %%%%%%% CONST %%%%%%%
-    piseq = getpisignal(seg{i},value);
-    
-    areasum = computeareasum(piseq,value);
-    %areasumpi = computeareasum2(smoothfit1(1:0.1:30));
-    %areasumhau = computeareasum2(smoothfit2(1:0.1:40));
-    
-    if length(areasum) > 6 && max(areasum) > 400 %%%%%%%% CONST %%%%%%%%
-        
-        figure(k)
-        xlim([co2timeint(tinf)-1 co2timeint(tsup)+1])
-        
-        dec = 30; % en Hz
-        if isequal(mod(i,2),0)
-            color = 'b';
-            dec = -dec;
-        else
-            color = 'k';
-        end
-        rectangle('Position',[co2timeint(pks(i,1))-0.15,1100+dec,1.6,4500],...
-                'Curvature',[0.4,0.8],...
-                'LineWidth',2,...
-                'LineStyle','--',...
-                'EdgeColor',color)
-        hold on
-        text(co2timeint(pks(i,1))+0.6,5800,truth{k}{ni},...
-        'VerticalAlignment','middle',...
-        'HorizontalAlignment','center',...
-        'FontSize',14)
-
-        au = (smoothfit1(1:0.1:30)).*(smoothfit1(1:0.1:30)>0);
-        ie = (smoothfit2(1:0.1:40)).*(smoothfit2(1:0.1:40)>0);
-        
-        fitresults = createFitFourier2(areasum);
-        measures = [measures; tinf double(uint8(truth{k}{ni}))...
-                    fitresults.a0 fitresults.a1 fitresults.b1...
-                    fitresults.a2 fitresults.b2 fitresults.w...
-                    max(areasum) length(areasum) sum(Sreca(:))...
-                    increasesize(areasum,size(m,1)-value) au' ie'];
-                
-        ni = ni+1;
-    end
-    
-    hold off 
-    
-    PLOT = 1;
-    if PLOT
-        % Focus on the current signal
-        figure(1)
-        xlim([co2timeint(tinf)-1 co2timeint(tsup)+1])
-
-        % Plot
-        figure(2)
-        subplot(131), plotmat(log(Sreca)); title('Raw') %Tint(trange),Fint(frange),
-        hold on
-        plot(3:36, smoothfit12(3:36).*(smoothfit12(3:36)>0), 'k', 'LineWidth',2)
-        plot(36+2:75, smoothfit22(2:75-36).*(smoothfit22(2:75-36)>0), 'k', 'LineWidth',2)
-        hold off
-        subplot(132), plotmat(Tint(trange),Fint(frange), m); title('The matrix to treat') % plotmat(new)
-        subplot(133), plotseg(seg{i},0,1,0,0) % plotmat(newdn)
-
-        figure(3)
-        plot(areasum,'-r'), hold on, %xlim([30 52]), ylim([400 1000])
-            
-        % Press key to continue
-        a = 1;
-        while a
-            a = ~waitforbuttonpress;
-        end
-
-        figure(3)
-        plot(areasum,'b'), hold on, %xlim([30 52]), ylim([400 1000])
     end
 end
 hold off
