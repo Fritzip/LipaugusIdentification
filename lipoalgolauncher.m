@@ -14,7 +14,7 @@ for i = 1:5 % »»»»» à augmenter «««««
 end
 
 %% Write measures in .dat file
-fileID = fopen('.\output\measures2.dat','w');
+fileID = fopen('.\output\measures3.dat','w');
 formatSpec = ['%d %s' repmat(' %f', [1,size(measures,2)-2]) '\n'];
 [nrows,ncols] = size(measures);
 for row = 1:nrows
@@ -23,15 +23,16 @@ end
 fclose(fileID);
 
 %% Hierarchical Clustering
-csvwrite('measures.csv',measures(:,3:end))
-D = pdist(cell2mat(measures(:,3:end)));
+%csvwrite('measures.csv',measures(:,3:end))
+%measures(isnan(measures)) = 0;
+D = pdist(measuresdfaonaeghf,'cityblock'); % measures(:,3:end)
 L = linkage(D,'average');
-dendrogram(L,0,'labels',measures(:,2));
-c = cophenet(L,D)
+dendrogram(L,0,'labels',char(dataV2')); % char(measures(:,2))
+%c = cophenet(L,D)
 
 %% Kmeans
-idx = kmeans(measures,18,'distance','city');
-[silh3,h] = silhouette(measures,idx,'city');
+idx = kmeans(mesuresaftlda2,9,'distance','city');
+[silh3,h] = silhouette(mesuresaftlda2,idx,'city');
 set(get(gca,'Children'),'FaceColor',[.8 .8 1])
 xlabel('Silhouette Value')
 ylabel('Cluster')
